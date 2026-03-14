@@ -18,6 +18,25 @@ function validateRow(draft) {
   return ''
 }
 
+function summarizeStorageArea(rawLocation) {
+  const location = String(rawLocation || '').trim()
+  if (!location || location.toLowerCase() === 'not assigned') {
+    return { short: 'Not assigned', full: 'Not assigned' }
+  }
+
+  const parts = location
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+
+  if (parts.length <= 2) {
+    return { short: parts.join(', '), full: parts.join(', ') }
+  }
+
+  const short = `${parts.slice(0, 2).join(', ')} +${parts.length - 2} more`
+  return { short, full: parts.join(', ') }
+}
+
 export default function Products(){
   const [items, setItems] = useState([])
   const [search, setSearch] = useState('')
@@ -193,6 +212,7 @@ export default function Products(){
           <tbody>
             {filteredItems.map((product) => {
               const draft = drafts[product.id] || {}
+              const storageArea = summarizeStorageArea(product.location)
               return (
               <React.Fragment key={product.id}>
                 <tr className="border-t border-white/6 align-middle text-base hover:bg-cyan-500/5">
@@ -236,24 +256,46 @@ export default function Products(){
                       {Math.max(toNumber(draft.onHand) - toNumber(draft.reservedQty), 0)}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-gray-300">
-                    <span className="inline-flex rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-base">{product.location}</span>
+                  <td className="max-w-[300px] px-3 py-3 text-gray-300">
+                    <span
+                      title={storageArea.full}
+                      className="inline-flex max-w-full truncate rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm"
+                    >
+                      {storageArea.short}
+                    </span>
                   </td>
                   <td className="px-3 py-3 text-gray-300">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setDraftValue(product.id, 'delta', String(toNumber(draft.delta) - 1))}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-300/30 bg-cyan-500/10 text-xl font-semibold leading-none text-cyan-100 hover:bg-cyan-500/20"
+                        title="Decrease by 1"
+                      >
+                        -
+                      </button>
                       <input
                         type="number"
                         step="1"
                         value={draft.delta ?? 0}
                         onChange={(event) => setDraftValue(product.id, 'delta', event.target.value)}
-                        className="form-field h-11 w-20 px-3"
-                        title="Use + or - quantity"
+                        className="form-field h-10 w-24 px-2 text-center text-cyan-100"
+                        title="Quantity change (example: -5 or 10)"
+                        placeholder="0"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setDraftValue(product.id, 'delta', String(toNumber(draft.delta) + 1))}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-300/30 bg-cyan-500/10 text-xl font-semibold leading-none text-cyan-100 hover:bg-cyan-500/20"
+                        title="Increase by 1"
+                      >
+                        +
+                      </button>
                       <button
                         type="button"
                         onClick={() => adjustStock(product.id)}
                         disabled={savingId === product.id}
-                        className="btn-muted h-11 px-3 text-sm disabled:opacity-60"
+                        className="btn-muted h-10 px-3 text-sm disabled:opacity-60"
                       >
                         Apply
                       </button>
