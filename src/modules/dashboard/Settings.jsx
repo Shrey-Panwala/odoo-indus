@@ -38,6 +38,22 @@ export default function Settings() {
     setLocationForm((prev) => ({ ...prev, warehouse_short_code: selectedWarehouseShortCode }))
   }, [selectedWarehouseShortCode])
 
+  const warehouseFormError = useMemo(() => {
+    if (!warehouseForm.name.trim() || !warehouseForm.short_code.trim() || !warehouseForm.address.trim()) {
+      return 'Name, short code and address are required.'
+    }
+    if (warehouseForm.short_code.trim().length < 2) return 'Warehouse short code must be at least 2 characters.'
+    return ''
+  }, [warehouseForm])
+
+  const locationFormError = useMemo(() => {
+    if (!locationForm.name.trim() || !locationForm.short_code.trim() || !locationForm.warehouse_id) {
+      return 'Name, short code and warehouse are required.'
+    }
+    if (!locationForm.warehouse_short_code) return 'Select a warehouse with a valid short code.'
+    return ''
+  }, [locationForm])
+
   const loadSettings = async () => {
     setLoading(true)
     try {
@@ -122,9 +138,9 @@ export default function Settings() {
 
   return (
     <motion.section initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h2 className="text-2xl font-semibold text-white">Settings</h2>
-        <p className="mt-1 text-sm text-gray-300">This page contains warehouse details and locations.</p>
+      <div className="surface-panel rounded-2xl p-6">
+        <h2 className="section-title text-2xl">Settings</h2>
+        <p className="section-subtitle mt-1">Manage warehouses and locations with strict mapping validation.</p>
       </div>
 
       {section !== 'warehouse' && section !== 'location' && (
@@ -143,10 +159,10 @@ export default function Settings() {
       )}
 
       {section === 'warehouse' && (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div className="surface-panel rounded-2xl p-6">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-xl font-semibold text-white">Warehouse</h3>
-            <button type="button" onClick={resetSection} className="rounded-lg border border-white/20 px-3 py-1 text-xs text-gray-200">
+            <button type="button" onClick={resetSection} className="btn-muted px-3 py-1 text-xs">
               Back
             </button>
           </div>
@@ -157,7 +173,7 @@ export default function Settings() {
               <input
                 value={warehouseForm.name}
                 onChange={(event) => setWarehouseForm((prev) => ({ ...prev, name: event.target.value }))}
-                className="rounded-lg border border-white/15 bg-gray-950/70 px-3 py-2 text-sm text-gray-100"
+                className="form-field"
               />
             </div>
 
@@ -165,8 +181,8 @@ export default function Settings() {
               <label className="text-sm text-gray-300">Short Code</label>
               <input
                 value={warehouseForm.short_code}
-                onChange={(event) => setWarehouseForm((prev) => ({ ...prev, short_code: event.target.value }))}
-                className="rounded-lg border border-white/15 bg-gray-950/70 px-3 py-2 text-sm text-gray-100"
+                onChange={(event) => setWarehouseForm((prev) => ({ ...prev, short_code: event.target.value.toUpperCase() }))}
+                className="form-field"
               />
             </div>
 
@@ -175,11 +191,13 @@ export default function Settings() {
               <input
                 value={warehouseForm.address}
                 onChange={(event) => setWarehouseForm((prev) => ({ ...prev, address: event.target.value }))}
-                className="rounded-lg border border-white/15 bg-gray-950/70 px-3 py-2 text-sm text-gray-100"
+                className="form-field"
               />
             </div>
 
-            <button type="submit" className="mt-2 w-fit rounded-lg border border-cyan-400/50 px-4 py-2 text-sm font-semibold text-cyan-100">
+            {warehouseFormError && <p className="text-xs text-amber-200">{warehouseFormError}</p>}
+
+            <button type="submit" disabled={Boolean(warehouseFormError)} className="btn-accent mt-2 w-fit disabled:opacity-60">
               {warehouseForm.id ? 'Update Warehouse' : 'Save Warehouse'}
             </button>
           </form>
@@ -225,10 +243,10 @@ export default function Settings() {
       )}
 
       {section === 'location' && (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div className="surface-panel rounded-2xl p-6">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-xl font-semibold text-white">Location</h3>
-            <button type="button" onClick={resetSection} className="rounded-lg border border-white/20 px-3 py-1 text-xs text-gray-200">
+            <button type="button" onClick={resetSection} className="btn-muted px-3 py-1 text-xs">
               Back
             </button>
           </div>
@@ -239,7 +257,7 @@ export default function Settings() {
               <input
                 value={locationForm.name}
                 onChange={(event) => setLocationForm((prev) => ({ ...prev, name: event.target.value }))}
-                className="rounded-lg border border-white/15 bg-gray-950/70 px-3 py-2 text-sm text-gray-100"
+                className="form-field"
               />
             </div>
 
@@ -247,8 +265,8 @@ export default function Settings() {
               <label className="text-sm text-gray-300">Short Code</label>
               <input
                 value={locationForm.short_code}
-                onChange={(event) => setLocationForm((prev) => ({ ...prev, short_code: event.target.value }))}
-                className="rounded-lg border border-white/15 bg-gray-950/70 px-3 py-2 text-sm text-gray-100"
+                onChange={(event) => setLocationForm((prev) => ({ ...prev, short_code: event.target.value.toUpperCase() }))}
+                className="form-field"
               />
             </div>
 
@@ -257,7 +275,7 @@ export default function Settings() {
               <select
                 value={locationForm.warehouse_id}
                 onChange={(event) => setLocationForm((prev) => ({ ...prev, warehouse_id: event.target.value }))}
-                className="rounded-lg border border-white/15 bg-gray-950/70 px-3 py-2 text-sm text-gray-100"
+                className="form-field"
               >
                 <option value="">Select warehouse</option>
                 {warehouses.map((warehouse) => (
@@ -273,11 +291,13 @@ export default function Settings() {
               <input
                 value={locationForm.warehouse_short_code}
                 readOnly
-                className="rounded-lg border border-white/15 bg-gray-950/40 px-3 py-2 text-sm text-cyan-100"
+                className="form-field bg-gray-950/40 text-cyan-100"
               />
             </div>
 
-            <button type="submit" className="mt-2 w-fit rounded-lg border border-cyan-400/50 px-4 py-2 text-sm font-semibold text-cyan-100">
+            {locationFormError && <p className="text-xs text-amber-200">{locationFormError}</p>}
+
+            <button type="submit" disabled={Boolean(locationFormError)} className="btn-accent mt-2 w-fit disabled:opacity-60">
               {locationForm.id ? 'Update Location' : 'Save Location'}
             </button>
           </form>

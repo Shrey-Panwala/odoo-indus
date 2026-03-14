@@ -1,16 +1,16 @@
-import { useMemo, useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Box, Package, Settings, UserCircle2, Activity, History, LogOut, Lock } from 'lucide-react'
+import { Box, Package, Settings, UserCircle2, Activity, History, LogOut, Lock, Menu, X, ChevronRight } from 'lucide-react'
 import AnimatedBackground from '../components/AnimatedBackground'
 import { useAuth } from '../auth/AuthContext'
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: Box },
-  { to: '/products', label: 'Stock', icon: Package },
-  { to: '/operations', label: 'Operations', icon: Activity },
-  { to: '/move-history', label: 'Move History', icon: History },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/dashboard', label: 'Dashboard', hint: 'Analytics and performance', icon: Box },
+  { to: '/products', label: 'Stock', hint: 'Realtime inventory edits', icon: Package },
+  { to: '/operations', label: 'Operations', hint: 'Receipts, deliveries, adjustments', icon: Activity },
+  { to: '/move-history', label: 'Move History', hint: 'Inbound and outbound timeline', icon: History },
+  { to: '/settings', label: 'Settings', hint: 'Warehouse and location setup', icon: Settings },
 ]
 
 function validPassword(password: string): string | null {
@@ -22,11 +22,17 @@ function validPassword(password: string): string | null {
   return null
 }
 
+function sectionTitle(pathname: string) {
+  const matched = navItems.find((item) => pathname.startsWith(item.to))
+  return matched?.label || 'Inventory'
+}
+
 export default function InventoryLayout() {
   const { user, logoutUser, updatePassword } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isPasswordPanelOpen, setIsPasswordPanelOpen] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [nextPassword, setNextPassword] = useState('')
@@ -39,6 +45,15 @@ export default function InventoryLayout() {
     if (!user) return { name: 'User', warehouse: 'Main Inventory' }
     return { name: user.fullName.split(' ')[0] || user.fullName, warehouse: user.organization }
   }, [user])
+
+  const currentSection = useMemo(() => sectionTitle(location.pathname), [location.pathname])
+  const nextPasswordError = useMemo(() => (nextPassword ? validPassword(nextPassword) : null), [nextPassword])
+  const passwordsMatch = useMemo(() => (confirmPassword ? nextPassword === confirmPassword : true), [nextPassword, confirmPassword])
+
+  useEffect(() => {
+    setIsSidebarOpen(false)
+    setIsProfileOpen(false)
+  }, [location.pathname])
 
   const handleLogout = () => {
     logoutUser()
@@ -85,28 +100,38 @@ export default function InventoryLayout() {
     <div className="relative min-h-screen overflow-hidden">
       <AnimatedBackground />
 
-      <div className="relative z-10 min-h-screen p-4 md:p-6">
-        <div className="mx-auto w-full max-w-7xl">
+      <div className="relative z-10 min-h-screen p-3 md:p-5">
+        <div className="mx-auto w-full max-w-[1600px]">
           <motion.header
-            className="relative z-30 glass-strong neon-border-cyan rounded-2xl px-4 py-3 md:px-6 md:py-4"
+            className="surface-panel-strong relative z-30 rounded-2xl px-4 py-3 md:px-6"
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="text-xl font-bold text-white md:text-2xl">
-                  Welcome back, <span className="text-gradient">{welcome.name}</span>
+            <div className="flex flex-wrap items-center gap-3 md:gap-4">
+              <button
+                type="button"
+                className="btn-muted lg:hidden"
+                onClick={() => setIsSidebarOpen((value) => !value)}
+                aria-label="Toggle navigation"
+              >
+                {isSidebarOpen ? <X size={16} /> : <Menu size={16} />}
+              </button>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-xs uppercase tracking-[0.2em] text-cyan-200/80">Inventory Control Center</p>
+                <h1 className="truncate text-lg font-semibold text-white md:text-2xl">
+                  {currentSection} <span className="text-cyan-300">Workspace</span>
                 </h1>
-                <p className="text-sm text-gray-300">
-                  Warehouse: <span className="font-semibold text-cyan-300">{welcome.warehouse}</span>
+                <p className="text-xs text-slate-300 md:text-sm">
+                  Welcome back, <span className="font-semibold text-white">{welcome.name}</span> · Warehouse: <span className="font-semibold text-cyan-200">{welcome.warehouse}</span>
                 </p>
               </div>
 
-              <div className="relative z-40 self-start md:self-auto">
+              <div className="relative z-40 ml-auto">
                 <button
                   type="button"
-                  className="glass rounded-xl px-4 py-2 text-sm font-medium text-gray-200 transition hover:text-white"
-                  onClick={() => setIsMenuOpen((value) => !value)}
+                  className="btn-muted"
+                  onClick={() => setIsProfileOpen((value) => !value)}
                 >
                   <span className="inline-flex items-center gap-2">
                     <UserCircle2 size={16} />
@@ -114,15 +139,15 @@ export default function InventoryLayout() {
                   </span>
                 </button>
 
-                {isMenuOpen && user && (
-                  <div className="absolute right-0 z-50 mt-2 w-72 rounded-xl border border-white/10 bg-gray-950/95 p-4 shadow-2xl">
+                {isProfileOpen && user && (
+                  <div className="surface-panel absolute right-0 z-50 mt-2 w-[290px] rounded-xl p-4 shadow-2xl">
                     <p className="text-sm font-semibold text-white">{user.fullName}</p>
                     <p className="text-xs text-gray-400">{user.email}</p>
                     <p className="mt-1 text-xs text-gray-500">Role: {user.role.replace('_', ' ')}</p>
                     <div className="mt-4 space-y-2">
                       <button
                         type="button"
-                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-left text-sm text-gray-200 hover:border-purple-400/50 hover:text-white"
+                        className="btn-muted w-full justify-start"
                         onClick={() => {
                           setIsPasswordPanelOpen((value) => !value)
                           setPasswordError('')
@@ -133,7 +158,7 @@ export default function InventoryLayout() {
                       </button>
                       <button
                         type="button"
-                        className="flex w-full items-center gap-2 rounded-lg border border-red-500/30 px-3 py-2 text-left text-sm text-red-300 hover:border-red-400 hover:text-red-200"
+                        className="inline-flex w-full items-center justify-start gap-2 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-200 transition hover:border-rose-300"
                         onClick={handleLogout}
                       >
                         <LogOut size={15} /> Logout
@@ -145,59 +170,75 @@ export default function InventoryLayout() {
             </div>
           </motion.header>
 
-          <div className="relative z-10 mt-6 grid gap-6 lg:grid-cols-[260px_1fr]">
+          <div className="relative z-20 mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+            {navItems.map(({ to, label, icon: Icon }) => {
+              const active = location.pathname === to
+              return (
+                <NavLink key={to} to={to} className={`nav-chip whitespace-nowrap ${active ? 'nav-chip-active' : ''}`}>
+                  <Icon size={14} />
+                  {label}
+                </NavLink>
+              )
+            })}
+          </div>
+
+          <div className="relative z-10 mt-4 grid gap-4 lg:grid-cols-[240px_1fr] xl:gap-5">
             <motion.aside
-              className="glass-strong neon-border-purple rounded-2xl p-3"
+              className={`surface-panel rounded-2xl p-3 ${isSidebarOpen ? 'block' : 'hidden'} lg:block`}
               initial={{ opacity: 0, x: -16 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <nav className="space-y-2">
-                {navItems.map(({ to, label, icon: Icon }) => {
+              <p className="px-3 pb-3 text-xs uppercase tracking-[0.2em] text-cyan-200/70">Navigation</p>
+              <nav className="space-y-2 px-1">
+                {navItems.map(({ to, label, hint, icon: Icon }) => {
                   const active = location.pathname === to
                   return (
-                    <Link
+                    <NavLink
                       key={to}
                       to={to}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition"
-                      style={{
-                        background: active ? 'rgba(6, 182, 212, 0.16)' : 'rgba(255,255,255,0.02)',
-                        border: active ? '1px solid rgba(6, 182, 212, 0.5)' : '1px solid rgba(255,255,255,0.06)',
-                        color: active ? '#67e8f9' : '#d1d5db',
-                      }}
+                      className={`group flex items-center gap-3 rounded-xl border px-3 py-3 text-sm transition ${
+                        active
+                          ? 'border-cyan-300/60 bg-cyan-500/15 text-cyan-100'
+                          : 'border-slate-500/20 bg-slate-900/25 text-slate-200 hover:border-cyan-400/40 hover:bg-cyan-500/5'
+                      }`}
                     >
-                      <Icon size={16} />
-                      {label}
-                    </Link>
+                      <Icon size={16} className={active ? 'text-cyan-200' : 'text-slate-300'} />
+                      <span className="flex-1">
+                        <span className="block font-medium">{label}</span>
+                        <span className="block text-xs text-slate-400">{hint}</span>
+                      </span>
+                      <ChevronRight size={15} className={active ? 'text-cyan-200' : 'text-slate-500 group-hover:text-cyan-300'} />
+                    </NavLink>
                   )
                 })}
               </nav>
             </motion.aside>
 
             <motion.main
-              className="glass-strong rounded-2xl border border-white/10 p-4 md:p-6"
+              className="surface-panel-strong rounded-2xl p-4 md:p-5"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
             >
               {isPasswordPanelOpen && (
-                <div className="mb-6 rounded-2xl border border-purple-400/30 bg-purple-500/5 p-4">
-                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-purple-200">Change Password</h2>
+                <div className="surface-subtle mb-5 rounded-2xl p-4">
+                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-cyan-200">Change Password</h2>
                   <form onSubmit={handlePasswordChange} className="grid gap-3 md:grid-cols-3">
                     <input
-                      className="input-field rounded-lg border border-white/10 px-3 py-2"
+                      className="form-field"
                       type="password"
                       placeholder="Current password"
                       value={currentPassword}
                       onChange={(event) => setCurrentPassword(event.target.value)}
                     />
                     <input
-                      className="input-field rounded-lg border border-white/10 px-3 py-2"
+                      className="form-field"
                       type="password"
                       placeholder="New password"
                       value={nextPassword}
                       onChange={(event) => setNextPassword(event.target.value)}
                     />
                     <input
-                      className="input-field rounded-lg border border-white/10 px-3 py-2"
+                      className="form-field"
                       type="password"
                       placeholder="Confirm new password"
                       value={confirmPassword}
@@ -206,11 +247,13 @@ export default function InventoryLayout() {
                     <button
                       type="submit"
                       disabled={isSaving}
-                      className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
+                      className="btn-accent disabled:opacity-70"
                     >
                       {isSaving ? 'Updating...' : 'Update Password'}
                     </button>
                   </form>
+                  {nextPassword && nextPasswordError && <p className="mt-2 text-xs text-amber-200">{nextPasswordError}</p>}
+                  {!passwordsMatch && <p className="mt-2 text-xs text-rose-300">Confirm password does not match.</p>}
                   {passwordError && <p className="mt-3 text-sm text-red-300">{passwordError}</p>}
                   {passwordSuccess && <p className="mt-3 text-sm text-emerald-300">{passwordSuccess}</p>}
                 </div>

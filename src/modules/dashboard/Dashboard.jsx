@@ -26,13 +26,13 @@ export default function Dashboard(){
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 p-5 rounded-2xl glass-strong neon-border-purple">
-          <h3 className="text-lg font-semibold mb-4 text-white">Stock Overview</h3>
+        <div className="surface-panel lg:col-span-2 rounded-2xl p-5">
+          <h3 className="section-title mb-4 text-lg">Stock Overview</h3>
           <StockChart />
         </div>
         <div className="space-y-6">
-          <div className="p-5 rounded-2xl glass-strong neon-border-cyan">
-            <h3 className="text-lg font-semibold mb-4 text-white">Operations</h3>
+          <div className="surface-panel rounded-2xl p-5">
+            <h3 className="section-title mb-4 text-lg">Operations</h3>
             <OperationCards />
           </div>
           <RecentActivity />

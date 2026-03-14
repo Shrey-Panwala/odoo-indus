@@ -25,6 +25,11 @@ const defaultQuery = {
   sortDir: 'desc',
 }
 
+function isPositiveNumber(value) {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) && numeric > 0
+}
+
 function RowActionButton({ onClick, tone = 'cyan', children }) {
   const classes =
     tone === 'green'
@@ -246,6 +251,29 @@ export default function OperationsModule() {
   const saveReceiptDraft = async () => {
     if (!receiptDraft) return null
 
+    if (!receiptDraft.schedule_date) {
+      setAlert('Schedule date is required for receipt.')
+      return null
+    }
+
+    const lineProductIds = new Set()
+    for (const line of receiptDraft.lines || []) {
+      if (!line.product_id) continue
+      if (!isPositiveNumber(line.quantity) || !isPositiveNumber(line.received_qty || line.quantity)) {
+        setAlert('Each receipt line must have a product and quantity greater than zero.')
+        return null
+      }
+      if (Number(line.received_qty || line.quantity) > Number(line.quantity)) {
+        setAlert('Received quantity cannot exceed ordered quantity.')
+        return null
+      }
+      if (lineProductIds.has(String(line.product_id))) {
+        setAlert('Duplicate product lines are not allowed in the same receipt.')
+        return null
+      }
+      lineProductIds.add(String(line.product_id))
+    }
+
     const lines = (receiptDraft.lines || [])
       .filter((line) => line.product_id)
       .map((line) => ({
@@ -326,12 +354,36 @@ export default function OperationsModule() {
   const saveDeliveryDraft = async () => {
     if (!deliveryDraft) return null
 
+    if (!deliveryDraft.schedule_date) {
+      setAlert('Schedule date is required for delivery.')
+      return null
+    }
+
+    const lineProductIds = new Set()
+    for (const line of deliveryDraft.lines || []) {
+      if (!line.product_id) continue
+      if (!isPositiveNumber(line.quantity)) {
+        setAlert('Each delivery line must have a product and quantity greater than zero.')
+        return null
+      }
+      if (lineProductIds.has(String(line.product_id))) {
+        setAlert('Duplicate product lines are not allowed in the same delivery order.')
+        return null
+      }
+      lineProductIds.add(String(line.product_id))
+    }
+
     const lines = (deliveryDraft.lines || [])
       .filter((line) => line.product_id)
       .map((line) => ({ product_id: Number(line.product_id), quantity: Number(line.quantity) }))
 
     if (!deliveryDraft.customer_name || !deliveryDraft.warehouse_id || !lines.length) {
       setAlert('Delivery address, warehouse and product lines are required.')
+      return null
+    }
+
+    if (hasOutOfStockLine) {
+      setAlert('Cannot save delivery while some lines exceed available stock.')
       return null
     }
 
