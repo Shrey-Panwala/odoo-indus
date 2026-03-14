@@ -1,20 +1,32 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, Zap, ArrowRight, Github, Chrome } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Zap, ArrowRight } from 'lucide-react'
 import AnimatedBackground from '../components/AnimatedBackground'
+import { useAuth } from '../auth/AuthContext'
 
 interface FormErrors {
   email?: string
   password?: string
 }
 
+interface LoginState {
+  message?: string
+  from?: string
+}
+
 export default function LoginPage() {
+  const { loginUser } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const state = (location.state ?? {}) as LoginState
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [serverError, setServerError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
 
@@ -27,8 +39,8 @@ export default function LoginPage() {
     }
     if (!password) {
       newErrors.password = 'Password is required'
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters'
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -36,12 +48,20 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setServerError('')
     if (!validate()) return
+
     setIsLoading(true)
-    // Simulate API call — replace with real auth logic
-    await new Promise((r) => setTimeout(r, 1500))
+    const result = await loginUser({ email, password, rememberMe })
     setIsLoading(false)
-    navigate('/dashboard') // adjust route as needed
+
+    if (!result.ok) {
+      setServerError(result.error ?? 'Login failed')
+      return
+    }
+
+    const redirectTo = state.from || '/dashboard'
+    navigate(redirectTo, { replace: true })
   }
 
   const containerVariants = {
@@ -73,49 +93,19 @@ export default function LoginPage() {
             >
               <Zap size={20} className="text-white" />
             </div>
-            <span className="text-2xl font-bold font-mono tracking-wider text-gradient">AuthX</span>
+            <span className="text-2xl font-bold font-mono tracking-wider text-gradient">Indus IMS</span>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Welcome back</h1>
-          <p className="text-gray-400 text-sm">Sign in to continue your journey</p>
+          <p className="text-gray-400 text-sm">Sign in to access your inventory workspace</p>
         </motion.div>
 
         {/* Card */}
         <motion.div variants={itemVariants} className="glass-strong rounded-2xl p-8 neon-border-purple">
-          {/* Social Logins */}
-          <div className="flex gap-3 mb-6">
-            {[
-              { icon: Github, label: 'GitHub', color: 'rgba(255,255,255,0.05)' },
-              { icon: Chrome, label: 'Google', color: 'rgba(255,255,255,0.05)' },
-            ].map(({ icon: Icon, label }) => (
-              <button
-                key={label}
-                type="button"
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-gray-300 transition-all duration-300 hover:text-white group"
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(168,85,247,0.4)'
-                  e.currentTarget.style.background = 'rgba(168,85,247,0.08)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-                }}
-              >
-                <Icon size={16} />
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-            <span className="text-xs text-gray-500 font-mono uppercase tracking-widest">or continue with</span>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-          </div>
+          {state.message && (
+            <p className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+              {state.message}
+            </p>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -166,7 +156,8 @@ export default function LoginPage() {
                 <button type="button" className="text-xs font-medium transition-colors duration-200"
                   style={{ color: '#a855f7' }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = '#06b6d4' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#a855f7' }}>
+                  onMouseLeave={(e) => { e.currentTarget.style.color = '#a855f7' }}
+                  onClick={() => navigate('/forgot-password')}>
                   Forgot password?
                 </button>
               </div>
@@ -212,6 +203,22 @@ export default function LoginPage() {
               )}
             </div>
 
+            <label className="flex items-center gap-3 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border border-white/20 bg-transparent"
+              />
+              Remember me
+            </label>
+
+            {serverError && (
+              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {serverError}
+              </p>
+            )}
+
             {/* Submit Button */}
             <motion.button
               type="submit"
@@ -251,7 +258,7 @@ export default function LoginPage() {
 
         {/* Bottom badge */}
         <motion.p variants={itemVariants} className="text-center text-xs text-gray-600 mt-6 font-mono">
-          🔒 256-bit encrypted &nbsp;·&nbsp; SOC 2 compliant &nbsp;·&nbsp; GDPR ready
+          256-bit hashed credentials · session protected · inventory ready
         </motion.p>
       </motion.div>
     </div>

@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, User, Zap, ArrowRight, Github, Chrome, Check, X } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, User, Zap, ArrowRight, Building2, Briefcase, Check, X } from 'lucide-react'
 import AnimatedBackground from '../components/AnimatedBackground'
+import { useAuth } from '../auth/AuthContext'
+import type { UserRole } from '../auth/authService'
 
 interface FormErrors {
   name?: string
   email?: string
   password?: string
   confirmPassword?: string
+  organization?: string
 }
 
 interface PasswordStrength {
@@ -49,15 +52,19 @@ function getRequirements(password: string): Requirement[] {
 }
 
 export default function SignupPage() {
+  const { signupUser } = useAuth()
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [role, setRole] = useState<UserRole>('inventory_manager')
+  const [organization, setOrganization] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [serverError, setServerError] = useState('')
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
@@ -76,11 +83,16 @@ export default function SignupPage() {
       newErrors.password = 'Password is required'
     } else if (password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters'
+    } else if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      newErrors.password = 'Use upper, lower, number, and special character'
     }
     if (!confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password'
     } else if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match'
+    }
+    if (organization.length > 0 && organization.trim().length < 2) {
+      newErrors.organization = 'Organization name is too short'
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0 && agreedToTerms
@@ -88,12 +100,28 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setServerError('')
     if (!validate()) return
+
     setIsLoading(true)
-    // Simulate API call — replace with real auth logic
-    await new Promise((r) => setTimeout(r, 1800))
+    const result = await signupUser({
+      fullName: name,
+      email,
+      password,
+      role,
+      organization,
+    })
     setIsLoading(false)
-    navigate('/login')
+
+    if (!result.ok) {
+      setServerError(result.error ?? 'Unable to create account')
+      return
+    }
+
+    navigate('/login', {
+      replace: true,
+      state: { message: 'Account created successfully. Please sign in.' },
+    })
   }
 
   const containerVariants = {
@@ -137,35 +165,11 @@ export default function SignupPage() {
             <span className="text-2xl font-bold font-mono tracking-wider text-gradient">AuthX</span>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Create account</h1>
-          <p className="text-gray-400 text-sm">Join thousands of builders today</p>
+          <p className="text-gray-400 text-sm">Set up your inventory workspace in minutes</p>
         </motion.div>
 
         {/* Card */}
         <motion.div variants={itemVariants} className="glass-strong rounded-2xl p-8 neon-border-purple">
-          {/* Social Signups */}
-          <div className="flex gap-3 mb-6">
-            {[{ icon: Github, label: 'GitHub' }, { icon: Chrome, label: 'Google' }].map(({ icon: Icon, label }) => (
-              <button
-                key={label}
-                type="button"
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-gray-300 transition-all duration-300 hover:text-white"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(168,85,247,0.4)'; e.currentTarget.style.background = 'rgba(168,85,247,0.08)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-              >
-                <Icon size={16} />
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-            <span className="text-xs text-gray-500 font-mono uppercase tracking-widest">or sign up with email</span>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Full Name */}
             <div>
@@ -187,6 +191,47 @@ export default function SignupPage() {
                 <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
                   className="mt-1.5 text-xs text-red-400 flex items-center gap-1">
                   <span className="inline-block w-1 h-1 rounded-full bg-red-400" />{errors.name}
+                </motion.p>
+              )}
+            </div>
+
+            {/* Role */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Role</label>
+              <div className="input-wrapper" style={inputStyle('role')}>
+                <Briefcase size={16} className="text-gray-500 mr-3 flex-shrink-0" />
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as UserRole)}
+                  onFocus={() => setFocusedField('role')}
+                  onBlur={() => setFocusedField(null)}
+                  className="input-field"
+                >
+                  <option value="inventory_manager" className="bg-gray-900">Inventory Manager</option>
+                  <option value="warehouse_staff" className="bg-gray-900">Warehouse Staff</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Organization */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Organization / Warehouse Name</label>
+              <div className="input-wrapper" style={inputStyle('organization', !!errors.organization)}>
+                <Building2 size={16} className="text-gray-500 mr-3 flex-shrink-0" />
+                <input
+                  type="text"
+                  value={organization}
+                  onChange={(e) => { setOrganization(e.target.value); setErrors((p) => ({ ...p, organization: undefined })) }}
+                  onFocus={() => setFocusedField('organization')}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="Main Inventory"
+                  className="input-field"
+                />
+              </div>
+              {errors.organization && (
+                <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
+                  className="mt-1.5 text-xs text-red-400 flex items-center gap-1">
+                  <span className="inline-block w-1 h-1 rounded-full bg-red-400" />{errors.organization}
                 </motion.p>
               )}
             </div>
@@ -349,6 +394,12 @@ export default function SignupPage() {
                 </>
               )}
             </motion.button>
+
+            {serverError && (
+              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {serverError}
+              </p>
+            )}
           </form>
 
           {/* Footer */}
@@ -368,7 +419,7 @@ export default function SignupPage() {
 
         {/* Bottom badge */}
         <motion.p variants={itemVariants} className="text-center text-xs text-gray-600 mt-6 font-mono">
-          🔒 256-bit encrypted &nbsp;·&nbsp; SOC 2 compliant &nbsp;·&nbsp; GDPR ready
+          Default warehouse and ledger are created on signup
         </motion.p>
       </motion.div>
     </div>

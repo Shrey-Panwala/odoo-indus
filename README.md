@@ -43,3 +43,28 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## OTP Email Setup (Forgot Password)
+
+The forgot-password flow now supports real OTP email delivery using EmailJS.
+
+1. Create an EmailJS account and set up:
+- One email service
+- One email template
+
+2. In your EmailJS template, use these variables:
+- `{{to_email}}`
+- `{{otp_code}}`
+- `{{app_name}}`
+
+3. Create a `.env` file from `.env.example` and fill:
+
+```bash
+VITE_EMAILJS_SERVICE_ID=your_service_id
+VITE_EMAILJS_TEMPLATE_ID=your_template_id
+VITE_EMAILJS_PUBLIC_KEY=your_public_key
+```
+
+4. Restart the dev server.
+
+If these values are missing, the app automatically falls back to demo OTP mode for local testing.
