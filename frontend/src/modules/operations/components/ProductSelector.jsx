@@ -25,7 +25,7 @@ export default function ProductSelector({ products, value, onChange, placeholder
         <option value="">Select product</option>
         {filtered.map((product) => (
           <option key={product.id} value={product.id}>
-            {product.name} ({product.sku || 'N/A'})
+            {product.name} (Code: {product.sku || 'N/A'})
           </option>
         ))}
       </select>

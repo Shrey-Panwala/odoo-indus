@@ -7,10 +7,10 @@ import { useAuth } from '../auth/AuthContext'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', hint: 'Analytics and performance', icon: Box },
-  { to: '/products', label: 'Stock', hint: 'Realtime inventory edits', icon: Package },
-  { to: '/operations', label: 'Operations', hint: 'Receipts, deliveries, adjustments', icon: Activity },
-  { to: '/move-history', label: 'Move History', hint: 'Inbound and outbound timeline', icon: History },
-  { to: '/settings', label: 'Settings', hint: 'Warehouse and location setup', icon: Settings },
+  { to: '/products', label: 'Inventory', hint: 'Live stock updates', icon: Package },
+  { to: '/operations', label: 'Order Processing', hint: 'Incoming, outgoing, and stock correction tasks', icon: Activity },
+  { to: '/move-history', label: 'Stock Movement History', hint: 'Incoming and outgoing timeline', icon: History },
+  { to: '/settings', label: 'Settings', hint: 'Storage site and area setup', icon: Settings },
 ]
 
 function validPassword(password: string): string | null {
@@ -125,7 +125,7 @@ export default function InventoryLayout() {
                   </h1>
                 </div>
                 <p className="text-xs text-slate-300 md:text-sm">
-                  Welcome back, <span className="font-semibold text-white">{welcome.name}</span> · Warehouse: <span className="font-semibold text-cyan-200">{welcome.warehouse}</span>
+                  Welcome back, <span className="font-semibold text-white">{welcome.name}</span> · Storage Site: <span className="font-semibold text-cyan-200">{welcome.warehouse}</span>
                 </p>
               </div>
 

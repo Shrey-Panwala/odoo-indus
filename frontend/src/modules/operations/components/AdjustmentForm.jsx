@@ -43,7 +43,7 @@ export default function AdjustmentForm({ locations, products, stockResolver, onS
       }))
 
     if (!locationId || !reason.trim() || !normalizedLines.length) {
-      setError('Location, reason and at least one line are required.')
+      setError('Storage area, reason, and at least one line are required.')
       return
     }
 
@@ -60,7 +60,7 @@ export default function AdjustmentForm({ locations, products, stockResolver, onS
         lines: normalizedLines,
       })
     } catch (submitError) {
-      setError(submitError?.message || 'Unable to create adjustment')
+      setError(submitError?.message || 'Unable to create stock correction')
     } finally {
       setSaving(false)
     }
@@ -73,7 +73,7 @@ export default function AdjustmentForm({ locations, products, stockResolver, onS
       onSubmit={submit}
       className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4"
     >
-      <h3 className="text-lg font-semibold text-white">Create Stock Adjustment</h3>
+      <h3 className="text-lg font-semibold text-white">Create Stock Correction</h3>
 
       <div className="grid gap-3 md:grid-cols-2">
         <select
@@ -81,7 +81,7 @@ export default function AdjustmentForm({ locations, products, stockResolver, onS
           onChange={(event) => setLocationId(event.target.value)}
           className="rounded-lg border border-white/10 bg-gray-950/70 px-3 py-2 text-sm text-gray-100"
         >
-          <option value="">Select location</option>
+          <option value="">Select storage area</option>
           {locations.map((location) => (
             <option key={location.id} value={location.id}>{location.name}</option>
           ))}
@@ -113,7 +113,7 @@ export default function AdjustmentForm({ locations, products, stockResolver, onS
                 value={line.counted_qty}
                 onChange={(event) => setLine(index, 'counted_qty', event.target.value)}
                 className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-100"
-                placeholder="Counted"
+                placeholder="Counted stock"
               />
               <div className={`rounded-lg border px-3 py-2 text-sm ${diff >= 0 ? 'border-emerald-400/40 text-emerald-200' : 'border-rose-400/40 text-rose-200'}`}>
                 {diff > 0 ? '+' : ''}{diff}
@@ -136,7 +136,7 @@ export default function AdjustmentForm({ locations, products, stockResolver, onS
           Add Row
         </button>
         <button type="submit" disabled={!canSubmit || saving} className="rounded-lg border border-purple-400/50 px-4 py-2 text-sm text-purple-200 disabled:opacity-40">
-          {saving ? 'Creating...' : 'Create Adjustment'}
+          {saving ? 'Creating...' : 'Create Stock Correction'}
         </button>
         <button type="button" onClick={onCancel} className="rounded-lg border border-white/20 px-4 py-2 text-sm text-gray-200">
           Cancel

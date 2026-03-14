@@ -11,9 +11,9 @@ import { createDelivery, getDeliveryById, listDeliveries, updateDeliveryById, va
 import { createAdjustment, getAdjustmentById, listAdjustments, validateAdjustment } from './services/adjustmentService'
 
 const tabs = [
-  { key: 'receipts', label: 'Receipts', icon: PackageCheck },
-  { key: 'deliveries', label: 'Delivery Orders', icon: Truck },
-  { key: 'adjustments', label: 'Stock Adjustments', icon: SlidersHorizontal },
+  { key: 'receipts', label: 'Incoming Orders', icon: PackageCheck },
+  { key: 'deliveries', label: 'Outgoing Orders', icon: Truck },
+  { key: 'adjustments', label: 'Stock Corrections', icon: SlidersHorizontal },
 ]
 
 const defaultQuery = {
@@ -60,7 +60,7 @@ function EmptyState({ text }) {
 function mapReceiptToDraft(data, fallbackUser) {
   return {
     id: data?.id || null,
-    reference: data?.reference || 'WH/IN/0001',
+    reference: data?.reference || 'IN/0001',
     supplier_id: data?.supplier_id || '',
     warehouse_id: data?.warehouse_id || '',
     schedule_date: data?.schedule_date || (data?.created_at ? new Date(data.created_at).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)),
@@ -78,7 +78,7 @@ function mapReceiptToDraft(data, fallbackUser) {
 function mapDeliveryToDraft(data, fallbackUser) {
   return {
     id: data?.id || null,
-    reference: data?.reference || 'WH/OUT/0001',
+    reference: data?.reference || 'OUT/0001',
     customer_name: data?.customer_name || '',
     warehouse_id: data?.warehouse_id || '',
     schedule_date: data?.schedule_date || (data?.created_at ? new Date(data.created_at).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)),
@@ -197,7 +197,7 @@ export default function OperationsModule() {
 
       setListData({ rows: paged, total: filtered.length, page, pageSize })
     } catch (error) {
-      setAlert(error?.response?.data?.error || error?.message || 'Unable to load operations data.')
+      setAlert(error?.response?.data?.error || error?.message || 'Unable to load task data.')
       setListData({ rows: [], total: 0, page: 1, pageSize: 8 })
     } finally {
       setLoading(false)
@@ -245,7 +245,7 @@ export default function OperationsModule() {
       setReceiptDraft(
         mapReceiptToDraft(
           {
-            reference: `WH/IN/${String((listData.total || 0) + 1).padStart(4, '0')}`,
+            reference: `IN/${String((listData.total || 0) + 1).padStart(4, '0')}`,
             status: 'Draft',
             lines: [{ product_id: '', expected_qty: '', received_qty: '' }],
           },
@@ -258,7 +258,7 @@ export default function OperationsModule() {
       setDeliveryDraft(
         mapDeliveryToDraft(
           {
-            reference: `WH/OUT/${String((listData.total || 0) + 1).padStart(4, '0')}`,
+            reference: `OUT/${String((listData.total || 0) + 1).padStart(4, '0')}`,
             status: 'Draft',
             lines: [{ product_id: '', quantity: '' }],
           },
@@ -295,7 +295,7 @@ export default function OperationsModule() {
     if (!receiptDraft) return null
 
     if (!receiptDraft.schedule_date) {
-      setAlert('Schedule date is required for receipt.')
+      setAlert('Planned date is required for incoming order.')
       return null
     }
 
@@ -303,15 +303,15 @@ export default function OperationsModule() {
     for (const line of receiptDraft.lines || []) {
       if (!line.product_id) continue
       if (!isPositiveNumber(line.quantity) || !isPositiveNumber(line.received_qty || line.quantity)) {
-        setAlert('Each receipt line must have a product and quantity greater than zero.')
+        setAlert('Each incoming order line needs a product and quantity greater than zero.')
         return null
       }
       if (Number(line.received_qty || line.quantity) > Number(line.quantity)) {
-        setAlert('Received quantity cannot exceed ordered quantity.')
+        setAlert('Received quantity cannot be higher than planned quantity.')
         return null
       }
       if (lineProductIds.has(String(line.product_id))) {
-        setAlert('Duplicate product lines are not allowed in the same receipt.')
+        setAlert('The same product cannot be added twice in one incoming order.')
         return null
       }
       lineProductIds.add(String(line.product_id))
@@ -326,7 +326,7 @@ export default function OperationsModule() {
       }))
 
     if (!receiptDraft.supplier_id || !receiptDraft.warehouse_id || !lines.length) {
-      setAlert('Supplier, warehouse and product lines are required.')
+      setAlert('Supplier, storage site, and product lines are required.')
       return null
     }
 
@@ -341,7 +341,7 @@ export default function OperationsModule() {
           created_by: receiptDraft.responsible,
           lines,
         })
-        setAlert('Receipt details updated.')
+        setAlert('Incoming order details updated.')
         return receiptDraft.id
       }
 
@@ -355,11 +355,11 @@ export default function OperationsModule() {
 
       const nextId = created?.id || null
       setReceiptDraft((prev) => ({ ...prev, id: nextId, reference: created?.reference || prev.reference }))
-      setAlert('New receipt created.')
+      setAlert('New incoming order created.')
       await loadList()
       return nextId
     } catch (error) {
-      setAlert(error?.response?.data?.error || error?.message || 'Unable to save receipt.')
+      setAlert(error?.response?.data?.error || error?.message || 'Unable to save incoming order.')
       return null
     } finally {
       setLoading(false)
@@ -371,7 +371,7 @@ export default function OperationsModule() {
 
     if (receiptDraft.status === 'Draft') {
       setReceiptDraft((prev) => ({ ...prev, status: 'Ready' }))
-      setAlert('Receipt moved to Ready.')
+      setAlert('Incoming order moved to Ready to Process.')
       return
     }
 
@@ -384,10 +384,10 @@ export default function OperationsModule() {
       try {
         await validateReceipt(receiptId)
         setReceiptDraft((prev) => ({ ...prev, status: 'Done', id: receiptId }))
-        setAlert('Receipt validated and moved to Done.')
+        setAlert('Incoming order completed successfully.')
         await loadList()
       } catch (error) {
-        setAlert(error?.response?.data?.error || error?.message || 'Receipt validation failed.')
+        setAlert(error?.response?.data?.error || error?.message || 'Incoming order validation failed.')
       } finally {
         setLoading(false)
       }
@@ -398,7 +398,7 @@ export default function OperationsModule() {
     if (!deliveryDraft) return null
 
     if (!deliveryDraft.schedule_date) {
-      setAlert('Schedule date is required for delivery.')
+      setAlert('Planned date is required for outgoing order.')
       return null
     }
 
@@ -421,12 +421,12 @@ export default function OperationsModule() {
       .map((line) => ({ product_id: Number(line.product_id), quantity: Number(line.quantity) }))
 
     if (!deliveryDraft.customer_name || !deliveryDraft.warehouse_id || !lines.length) {
-      setAlert('Delivery address, warehouse and product lines are required.')
+      setAlert('Delivery address, storage site, and product lines are required.')
       return null
     }
 
     if (hasOutOfStockLine) {
-      setAlert('Cannot save delivery while some lines exceed available stock.')
+      setAlert('Cannot save outgoing order while some lines exceed available stock.')
       return null
     }
 
@@ -442,7 +442,7 @@ export default function OperationsModule() {
           responsible: deliveryDraft.responsible,
           lines,
         })
-        setAlert('Delivery details updated.')
+        setAlert('Outgoing order details updated.')
         return deliveryDraft.id
       }
 
@@ -457,11 +457,11 @@ export default function OperationsModule() {
 
       const nextId = created?.id || null
       setDeliveryDraft((prev) => ({ ...prev, id: nextId, reference: created?.reference || prev.reference }))
-      setAlert('New delivery created.')
+      setAlert('New outgoing order created.')
       await loadList()
       return nextId
     } catch (error) {
-      setAlert(error?.response?.data?.error || error?.message || 'Unable to save delivery.')
+      setAlert(error?.response?.data?.error || error?.message || 'Unable to save outgoing order.')
       return null
     } finally {
       setLoading(false)
@@ -473,13 +473,13 @@ export default function OperationsModule() {
 
     if (deliveryDraft.status === 'Draft') {
       setDeliveryDraft((prev) => ({ ...prev, status: 'Waiting' }))
-      setAlert('Delivery moved to Waiting.')
+      setAlert('Outgoing order moved to Waiting.')
       return
     }
 
     if (deliveryDraft.status === 'Waiting') {
       setDeliveryDraft((prev) => ({ ...prev, status: 'Ready' }))
-      setAlert('Delivery moved to Ready.')
+      setAlert('Outgoing order moved to Ready to Process.')
       return
     }
 
@@ -492,10 +492,10 @@ export default function OperationsModule() {
       try {
         await validateDelivery(deliveryId)
         setDeliveryDraft((prev) => ({ ...prev, status: 'Done', id: deliveryId }))
-        setAlert('Delivery validated and moved to Done.')
+        setAlert('Outgoing order completed successfully.')
         await loadList()
       } catch (error) {
-        setAlert(error?.response?.data?.error || error?.message || 'Delivery validation failed.')
+        setAlert(error?.response?.data?.error || error?.message || 'Outgoing order validation failed.')
       } finally {
         setLoading(false)
       }
@@ -549,7 +549,7 @@ export default function OperationsModule() {
     <motion.section initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <header className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <h2 className="text-2xl font-bold text-white">Operations</h2>
-        <p className="mt-1 text-sm text-gray-300">Professional stock movement workflows with validation and movement traceability.</p>
+        <p className="mt-1 text-sm text-gray-300">Clear incoming, outgoing, and stock correction workflows with built-in checks.</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
           {tabs.map(({ key, label, icon: Icon }) => {
@@ -589,14 +589,14 @@ export default function OperationsModule() {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="text-lg font-semibold text-white">
-                  {activeTab === 'receipts' ? 'Incoming Receipts' : activeTab === 'deliveries' ? 'Delivery Orders' : 'Stock Adjustments'}
+                  {activeTab === 'receipts' ? 'Incoming Orders' : activeTab === 'deliveries' ? 'Outgoing Orders' : 'Stock Corrections'}
                 </h3>
                 <p className="text-xs text-gray-400">
                   {activeTab === 'receipts'
-                    ? 'Capture incoming supplier stock and validate inventory receipts safely.'
+                    ? 'Record incoming stock from suppliers and complete it safely.'
                     : activeTab === 'deliveries'
-                      ? 'Process outbound customer deliveries with stock safety checks.'
-                      : 'Correct stock mismatches using controlled cycle-count adjustments.'}
+                      ? 'Process outgoing customer shipments with stock safety checks.'
+                      : 'Fix stock mismatches using guided stock correction.'}
                 </p>
               </div>
 
@@ -617,7 +617,7 @@ export default function OperationsModule() {
                 <div className="rounded-xl border border-white/10 bg-white/5">
                   <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-3 py-2">
                     <button type="button" onClick={openCreate} className="rounded-lg border border-amber-300/60 px-3 py-1 text-xs font-semibold text-amber-100">NEW</button>
-                    <h4 className="text-2xl font-semibold text-amber-50">Receipts</h4>
+                    <h4 className="text-2xl font-semibold text-amber-50">Incoming Orders</h4>
 
                     <div className="ml-auto flex flex-wrap items-center gap-2">
                       <div className="relative w-64 max-w-full">
@@ -625,7 +625,7 @@ export default function OperationsModule() {
                         <input
                           value={query.search}
                           onChange={(event) => setQuery((prev) => ({ ...prev, page: 1, search: event.target.value }))}
-                          placeholder="Search reference or contacts"
+                          placeholder="Search by reference or contact"
                           className="w-full rounded-lg border border-white/15 bg-gray-950/60 py-2 pl-9 pr-3 text-sm text-gray-100"
                         />
                       </div>
@@ -653,7 +653,7 @@ export default function OperationsModule() {
                             <tr key={row.id} className="cursor-pointer border-t border-white/10 text-sm text-gray-200 hover:bg-white/5" onClick={() => openDetail(row.id)}>
                               <td className="px-2 py-2 font-medium text-cyan-100">{row.reference}</td>
                               <td className="px-2 py-2">{row.supplier_name || 'vendor'}</td>
-                              <td className="px-2 py-2">{row.warehouse_name ? `WH/${row.warehouse_name}` : 'WH/Stock1'}</td>
+                              <td className="px-2 py-2">{row.warehouse_name ? `Site/${row.warehouse_name}` : 'Site/Default'}</td>
                               <td className="px-2 py-2">{row.supplier_name || row.created_by || '-'}</td>
                               <td className="px-2 py-2">{new Date(row.schedule_date || row.created_at).toLocaleDateString()}</td>
                               <td className="px-2 py-2"><StatusBadge value={row.status} /></td>
@@ -661,7 +661,7 @@ export default function OperationsModule() {
                           ))}
                         </tbody>
                       </table>
-                      {!listData.rows.length && <EmptyState text="No receipts found." />}
+                      {!listData.rows.length && <EmptyState text="No incoming orders found." />}
                     </div>
                   ) : (
                     <div className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-5">
@@ -672,7 +672,7 @@ export default function OperationsModule() {
                             {rows.map((row) => (
                               <button key={row.id} type="button" onClick={() => openDetail(row.id)} className="w-full rounded-lg border border-white/10 bg-gray-950/40 px-2 py-2 text-left text-xs text-gray-200 hover:border-cyan-400/40">
                                 <p className="font-semibold text-cyan-100">{row.reference}</p>
-                                <p>{row.supplier_name || 'vendor'}</p>
+                                <p>{row.supplier_name || 'supplier'}</p>
                               </button>
                             ))}
                             {!rows.length && <p className="text-xs text-gray-500">No items</p>}
@@ -690,7 +690,7 @@ export default function OperationsModule() {
                 <div className="rounded-xl border border-white/10 bg-white/5">
                   <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-3 py-2">
                     <button type="button" onClick={openCreate} className="rounded-lg border border-amber-300/60 px-3 py-1 text-xs font-semibold text-amber-100">NEW</button>
-                    <h4 className="text-2xl font-semibold text-amber-50">Delivery</h4>
+                    <h4 className="text-2xl font-semibold text-amber-50">Outgoing Orders</h4>
 
                     <div className="ml-auto flex flex-wrap items-center gap-2">
                       <div className="relative w-64 max-w-full">
@@ -698,7 +698,7 @@ export default function OperationsModule() {
                         <input
                           value={query.search}
                           onChange={(event) => setQuery((prev) => ({ ...prev, page: 1, search: event.target.value }))}
-                          placeholder="Search reference or contacts"
+                          placeholder="Search by reference or contact"
                           className="w-full rounded-lg border border-white/15 bg-gray-950/60 py-2 pl-9 pr-3 text-sm text-gray-100"
                         />
                       </div>
@@ -725,8 +725,8 @@ export default function OperationsModule() {
                           {listData.rows.map((row) => (
                             <tr key={row.id} className="cursor-pointer border-t border-white/10 text-sm text-gray-200 hover:bg-white/5" onClick={() => openDetail(row.id)}>
                               <td className="px-2 py-2 font-medium text-cyan-100">{row.reference}</td>
-                              <td className="px-2 py-2">{row.warehouse_name ? `WH/${row.warehouse_name}` : 'WH/Stock1'}</td>
-                              <td className="px-2 py-2">{row.customer_name || 'vendor'}</td>
+                              <td className="px-2 py-2">{row.warehouse_name ? `Site/${row.warehouse_name}` : 'Site/Default'}</td>
+                              <td className="px-2 py-2">{row.customer_name || 'customer'}</td>
                               <td className="px-2 py-2">{row.customer_name || '-'}</td>
                               <td className="px-2 py-2">{new Date(row.schedule_date || row.created_at).toLocaleDateString()}</td>
                               <td className="px-2 py-2"><StatusBadge value={row.status} /></td>
@@ -734,7 +734,7 @@ export default function OperationsModule() {
                           ))}
                         </tbody>
                       </table>
-                      {!listData.rows.length && <EmptyState text="No deliveries found." />}
+                      {!listData.rows.length && <EmptyState text="No outgoing orders found." />}
                     </div>
                   ) : (
                     <div className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-4">
@@ -745,7 +745,7 @@ export default function OperationsModule() {
                             {rows.map((row) => (
                               <button key={row.id} type="button" onClick={() => openDetail(row.id)} className="w-full rounded-lg border border-white/10 bg-gray-950/40 px-2 py-2 text-left text-xs text-gray-200 hover:border-cyan-400/40">
                                 <p className="font-semibold text-cyan-100">{row.reference}</p>
-                                <p>{row.customer_name || 'vendor'}</p>
+                                <p>{row.customer_name || 'customer'}</p>
                               </button>
                             ))}
                             {!rows.length && <p className="text-xs text-gray-500">No items</p>}
@@ -762,19 +762,19 @@ export default function OperationsModule() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3">
                   <button type="button" onClick={openCreate} className="rounded-lg border border-amber-300/60 px-3 py-1 text-xs font-semibold text-amber-100">New</button>
-                  <h4 className="text-2xl font-semibold text-amber-50">Receipt</h4>
+                  <h4 className="text-2xl font-semibold text-amber-50">Incoming Order</h4>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-gray-950/30 px-3 py-2">
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={runReceiptPrimaryAction} disabled={loading || receiptDraft.status === 'Done'} className="rounded-lg border border-cyan-400/60 px-3 py-1 text-xs font-semibold text-cyan-100 disabled:opacity-40">
-                      {receiptDraft.status === 'Draft' ? 'To Do' : receiptDraft.status === 'Ready' ? 'Validate' : 'Done'}
+                      {receiptDraft.status === 'Draft' ? 'Mark Ready' : receiptDraft.status === 'Ready' ? 'Complete' : 'Completed'}
                     </button>
                     <button type="button" onClick={() => saveReceiptDraft()} disabled={loading} className="rounded-lg border border-purple-400/60 px-3 py-1 text-xs font-semibold text-purple-100 disabled:opacity-40">Save</button>
                     <button type="button" onClick={() => window.print()} disabled={receiptDraft.status !== 'Done'} className="rounded-lg border border-emerald-400/60 px-3 py-1 text-xs font-semibold text-emerald-100 disabled:opacity-40">Print</button>
                     <button type="button" onClick={openList} className="rounded-lg border border-rose-400/60 px-3 py-1 text-xs font-semibold text-rose-100">Cancel</button>
                   </div>
-                  <div className="rounded-lg border border-white/15 px-3 py-1 text-xs text-gray-200">Draft &gt; Ready &gt; Done</div>
+                  <div className="rounded-lg border border-white/15 px-3 py-1 text-xs text-gray-200">Not Started &gt; Ready to Process &gt; Completed</div>
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -796,9 +796,9 @@ export default function OperationsModule() {
                       <input value={receiptDraft.responsible} onChange={(e) => setReceiptDraft((prev) => ({ ...prev, responsible: e.target.value }))} className="w-full rounded-lg border border-white/15 bg-gray-950/40 px-3 py-2 text-sm text-gray-300" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-400">To Warehouse</label>
+                      <label className="text-xs text-gray-400">To Storage Site</label>
                       <select value={receiptDraft.warehouse_id} onChange={(e) => setReceiptDraft((prev) => ({ ...prev, warehouse_id: e.target.value }))} className="w-full rounded-lg border border-white/15 bg-gray-950/70 px-3 py-2 text-sm text-gray-100">
-                        <option value="">Select warehouse</option>
+                        <option value="">Select storage site</option>
                         {warehouses.map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>)}
                       </select>
                     </div>
@@ -858,7 +858,7 @@ export default function OperationsModule() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3">
                   <button type="button" onClick={openCreate} className="rounded-lg border border-amber-300/60 px-3 py-1 text-xs font-semibold text-amber-100">New</button>
-                  <h4 className="text-2xl font-semibold text-amber-50">Delivery</h4>
+                  <h4 className="text-2xl font-semibold text-amber-50">Outgoing Order</h4>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-gray-950/30 px-3 py-2">
@@ -868,12 +868,12 @@ export default function OperationsModule() {
                     <button type="button" onClick={() => window.print()} disabled={deliveryDraft.status !== 'Done'} className="rounded-lg border border-emerald-400/60 px-3 py-1 text-xs font-semibold text-emerald-100 disabled:opacity-40">Print</button>
                     <button type="button" onClick={openList} className="rounded-lg border border-rose-400/60 px-3 py-1 text-xs font-semibold text-rose-100">Cancel</button>
                   </div>
-                  <div className="rounded-lg border border-white/15 px-3 py-1 text-xs text-gray-200">Draft &gt; Waiting &gt; Ready &gt; Done</div>
+                  <div className="rounded-lg border border-white/15 px-3 py-1 text-xs text-gray-200">Not Started &gt; Waiting &gt; Ready to Process &gt; Completed</div>
                 </div>
 
                 {hasOutOfStockLine && (
                   <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
-                    Some product lines exceed available stock. Marked rows are highlighted.
+                    Some product lines are higher than available stock. Highlighted rows need changes.
                   </div>
                 )}
 
@@ -901,9 +901,9 @@ export default function OperationsModule() {
                       </select>
                     </div>
                     <div className="space-y-1 md:col-span-2">
-                      <label className="text-xs text-gray-400">From Warehouse</label>
+                      <label className="text-xs text-gray-400">From Storage Site</label>
                       <select value={deliveryDraft.warehouse_id} onChange={(e) => setDeliveryDraft((prev) => ({ ...prev, warehouse_id: e.target.value }))} className="w-full rounded-lg border border-white/15 bg-gray-950/70 px-3 py-2 text-sm text-gray-100">
-                        <option value="">Select warehouse</option>
+                        <option value="">Select storage site</option>
                         {warehouses.map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>)}
                       </select>
                     </div>
@@ -938,7 +938,7 @@ export default function OperationsModule() {
                                   lines[index] = { ...lines[index], quantity: e.target.value }
                                   return { ...prev, lines }
                                 })} className="w-32 rounded-lg border border-white/15 bg-gray-950/70 px-3 py-2 text-sm text-gray-100" />
-                                {line.available_stock !== undefined && <p className="mt-1 text-xs text-gray-400">Available: {line.available_stock}</p>}
+                                {line.available_stock !== undefined && <p className="mt-1 text-xs text-gray-400">In stock: {line.available_stock}</p>}
                               </td>
                               <td className="px-3 py-2">
                                 <button type="button" onClick={() => setDeliveryDraft((prev) => {
@@ -967,12 +967,12 @@ export default function OperationsModule() {
                     <input
                       value={query.search}
                       onChange={(event) => setQuery((prev) => ({ ...prev, page: 1, search: event.target.value }))}
-                      placeholder="Search reference or reason"
+                      placeholder="Search by reference or reason"
                       className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-gray-100"
                     />
                   </div>
                   <select value={query.status} onChange={(event) => setQuery((prev) => ({ ...prev, page: 1, status: event.target.value }))} className="rounded-lg border border-white/10 bg-gray-950/70 px-3 py-2 text-sm text-gray-100">
-                    <option value="">All statuses</option>
+                    <option value="">All progress states</option>
                     <option value="Draft">Draft</option>
                     <option value="Done">Done</option>
                   </select>
@@ -1009,7 +1009,7 @@ export default function OperationsModule() {
                             <td className="px-2 py-2">
                               <div className="flex flex-wrap gap-1">
                                 <RowActionButton onClick={() => openDetail(row.id)}><span className="inline-flex items-center gap-1"><Eye size={12} /> View</span></RowActionButton>
-                                <RowActionButton tone="green" onClick={() => validateAdjustment(row.id)}><span className="inline-flex items-center gap-1"><CheckCircle2 size={12} /> Validate</span></RowActionButton>
+                                <RowActionButton tone="green" onClick={() => validateAdjustment(row.id)}><span className="inline-flex items-center gap-1"><CheckCircle2 size={12} /> Complete</span></RowActionButton>
                               </div>
                             </td>
                           </tr>
@@ -1067,7 +1067,7 @@ export default function OperationsModule() {
                   </table>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={openList} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-gray-200">Back</button>
+                  <button type="button" onClick={openList} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-gray-200">Back to list</button>
                 </div>
               </motion.div>
             )}
@@ -1075,7 +1075,7 @@ export default function OperationsModule() {
             <div className="mt-3 flex items-center justify-between">
               <p className="text-xs text-gray-400">Showing {(listData.page - 1) * listData.pageSize + 1} to {Math.min(listData.page * listData.pageSize, listData.total)} of {listData.total}</p>
               <div className="flex gap-2">
-                <button type="button" onClick={() => changePage(-1)} disabled={listData.page <= 1} className="rounded-lg border border-white/20 px-3 py-1 text-xs text-gray-200 disabled:opacity-40">Prev</button>
+                <button type="button" onClick={() => changePage(-1)} disabled={listData.page <= 1} className="rounded-lg border border-white/20 px-3 py-1 text-xs text-gray-200 disabled:opacity-40">Previous</button>
                 <button type="button" onClick={() => changePage(1)} disabled={listData.page * listData.pageSize >= listData.total} className="rounded-lg border border-white/20 px-3 py-1 text-xs text-gray-200 disabled:opacity-40">Next</button>
               </div>
             </div>

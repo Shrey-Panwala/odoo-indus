@@ -23,7 +23,7 @@ function OpCard({ title, buttonText, stats, onOpen }){
         </button>
       </div>
       <div className="grid grid-cols-1 gap-2 text-gray-300">
-        <div className="flex justify-between text-sm"><span>Pending</span><span className="text-amber-200 font-semibold">{stats.pending}</span></div>
+        <div className="flex justify-between text-sm"><span>Waiting</span><span className="text-amber-200 font-semibold">{stats.pending}</span></div>
         <div className="flex justify-between text-sm"><span>Total</span><span className="font-semibold text-white">{stats.total}</span></div>
       </div>
     </motion.div>
@@ -58,16 +58,16 @@ export default function OperationCards(){
     <div className="space-y-4">
       <div className="rounded-xl">
         <OpCard
-          title="Receipts"
-          buttonText="Items to Receive"
+          title="Incoming Orders"
+          buttonText="Review Incoming"
           stats={receiptStats}
           onOpen={() => navigate('/operations?tab=receipts&view=list')}
         />
       </div>
       <div className="rounded-xl">
         <OpCard
-          title="Deliveries"
-          buttonText="Items to Deliver"
+          title="Outgoing Orders"
+          buttonText="Review Outgoing"
           stats={deliveryStats}
           onOpen={() => navigate('/operations?tab=deliveries&view=list')}
         />

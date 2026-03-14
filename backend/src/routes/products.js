@@ -11,10 +11,19 @@ router.get('/', auth, async (req, res) => {
     const { category, search, lowStock } = req.query;
     let sql = `
       SELECT p.*, c.name AS category_name,
-             COALESCE(SUM(sl.quantity), 0)::int AS total_stock
+             COALESCE(SUM(sl.quantity), 0)::int AS total_stock,
+             COALESCE(
+               STRING_AGG(
+                 DISTINCT (w.name || ' / ' || l.name),
+                 ', '
+               ) FILTER (WHERE l.id IS NOT NULL),
+               'Not assigned'
+             ) AS location
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       LEFT JOIN stock_levels sl ON sl.product_id = p.id
+      LEFT JOIN locations l ON l.id = sl.location_id
+      LEFT JOIN warehouses w ON w.id = l.warehouse_id
       WHERE p.is_deleted = FALSE
     `;
     const params = [];

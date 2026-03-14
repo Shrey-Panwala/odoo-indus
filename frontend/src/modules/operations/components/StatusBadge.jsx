@@ -11,10 +11,17 @@ const tones = {
 export default function StatusBadge({ value }) {
   const key = String(value || 'Draft')
   const classes = tones[key] || tones.Draft
+  const labels = {
+    Draft: 'Not Started',
+    Waiting: 'Waiting',
+    Ready: 'Ready to Process',
+    Done: 'Completed',
+    Canceled: 'Canceled',
+  }
 
   return (
     <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${classes}`}>
-      {key}
+      {labels[key] || key}
     </span>
   )
 }

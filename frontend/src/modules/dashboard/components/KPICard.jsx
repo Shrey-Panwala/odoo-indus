@@ -4,7 +4,9 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts'
 
 export default function KPICard({ title, value, icon }){
   const numericValue = Number(value || 0)
-  const tiny = [{ v: Math.max(numericValue * 0.58, 0) }, { v: Math.max(numericValue * 0.8, 0) }, { v: numericValue }]
+  const baseline = Math.max(numericValue, 0)
+  // Keep a steady mini-line so KPI cards look clean instead of artificially trending.
+  const tiny = [{ v: baseline }, { v: baseline }, { v: baseline }]
 
   return (
     <motion.div

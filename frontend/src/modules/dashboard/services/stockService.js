@@ -27,7 +27,7 @@ function normalizeProduct(p) {
     name: p.name,
     sku: p.sku,
     category: p.category_name || p.category || '',
-    location: p.location || '',
+    location: p.location || p.location_name || 'Not assigned',
     unit_cost: Number(p.unit_cost ?? 0),
     on_hand: Math.max(onHand, 0),
     stock: Math.max(onHand, 0),

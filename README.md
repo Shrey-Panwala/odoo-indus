@@ -1,202 +1,128 @@
-# Odoo-Indus Inventory Platform
+# Odoo-Indus CoreInventory
 
-Modern, hackathon-focused inventory management platform with strong frontend UX, validated stock workflows, and API-first operations.
+Modular Inventory Management System (IMS) for hackathon/demo use with real operational flows, PostgreSQL-backed APIs, interactive analytics dashboards, and modern UI.
 
-## 1. Overview
+## What This Project Solves
 
-This project delivers an end-to-end inventory experience with:
+This app digitizes inventory workflows that are usually tracked in registers and spreadsheets:
 
-- Authentication and profile management
-- Stock management with validation and live editable controls
-- Operations workflows for Receipts, Delivery Orders, and Stock Adjustments
-- Move History timeline with list/kanban views
-- Settings for Warehouse and Location mapping with strict short-code rules
-- API-first services with local fallback stores for demo resilience
+- product catalog and stock visibility
+- receipts, deliveries, transfers, and adjustments
+- real-time stock impact on validation
+- stock ledger for traceability
+- OTP-based password reset
 
-The app is designed to remain fully demonstrable even when backend endpoints are unavailable.
+## Architecture
 
-## 2. Core Features
+- Frontend: React + Vite + TypeScript + Tailwind + Framer Motion + Recharts
+- Backend: Node.js + Express + PostgreSQL (pg)
+- Auth: JWT + bcrypt
+- API style: REST under /api/*
 
-### 2.1 Authentication
+## Project Structure
 
-- Login and signup
-- Forgot password with OTP flow
-- Optional EmailJS OTP delivery
-- Password update from profile panel with strength checks
+```text
+projects/odoo-indus-main/
+  backend/
+    src/
+      db/
+      middleware/
+      routes/
+    .env.example
+    package.json
+  frontend/
+    src/
+      auth/
+      components/
+      layout/
+      modules/
+      pages/
+      services/
+    package.json
+```
 
-### 2.2 Dashboard
+## Core Features
 
-- KPI cards (stock, low stock, pending operations)
-- Stock overview chart
-- Operations quick-access cards
-- Recent activity feed
+- Authentication
+- Signup and login
+- Forgot password with OTP verification
+- EmailJS integration for OTP email delivery
 
-### 2.3 Stock Module
+- Dashboard
+- KPI cards for stock and operations
+- Interactive graphs with filters (document type, warehouse, category, movement type, date window)
+- AI-style inventory insights panel
+- Recent activity feed from stock ledger
 
-- Editable table for:
-	- Unit cost
-	- On-hand quantity
-	- Reserved quantity
-	- Increment/decrement adjustments
-- Inline validation:
-	- No negative values
-	- Reserved <= on hand
-	- Adjustment cannot make stock negative
-- Row-level feedback and safer save/apply actions
+- Inventory Modules
+- Products with stock visibility
+- Receipts (incoming stock)
+- Deliveries (outgoing stock)
+- Internal transfers (location-to-location)
+- Stock adjustments (system vs physical count)
+- Move history and ledger tracking
 
-### 2.4 Operations Module
+- Settings
+- Warehouse and location setup
 
-- Receipts:
-	- List and Kanban view
-	- Create/Edit detail workspace
-	- Status flow (Draft -> Ready -> Done)
-	- Validation action to post stock movement
-- Delivery Orders:
-	- List and Kanban view
-	- Create/Edit detail workspace
-	- Status flow (Draft -> Waiting -> Ready -> Done)
-	- Out-of-stock prevention before validation
-- Stock Adjustments:
-	- List, create, detail, validate
-	- Ledger-ready movement semantics
+## API Endpoints (Main)
 
-### 2.5 Move History
-
-- Dedicated tab with:
-	- Default list view
-	- Search by reference/contact
-	- List/kanban switch
-	- Inbound/outbound quantity direction cues
-	- Row expansion behavior for multi-line references
-
-### 2.6 Settings
-
-- Warehouse management
-- Location management
-- Strict validation:
-	- Warehouse short code required
-	- Location must map to selected warehouse
-	- Warehouse short code mismatch is blocked on add/edit
-
-## 3. Architecture
-
-### 3.1 Frontend
-
-- React 18 + Vite
-- TypeScript at app shell and route level
-- Tailwind CSS + custom utility design system
-- Framer Motion for motion/transitions
-- React Router for protected app navigation
-
-### 3.2 Backend
-
-- Express API
-- SQLite demo database for local development
-- PostgreSQL-ready operations route scaffold
-
-### 3.3 Data Strategy
-
-- API-first services
-- Automatic fallback to localStorage stores for demo continuity
-- Enables hackathon demo even without full DB availability
-
-## 4. API Summary
-
-Base URL: http://localhost:4000
-
-### 4.1 Core APIs
-
-- /api/dashboard/stats
+- /api/auth/*
+- /api/dashboard/*
 - /api/products
 - /api/receipts
 - /api/deliveries
+- /api/transfers
 - /api/adjustments
+- /api/ledger
+- /api/warehouses
+- /api/locations
 
-### 4.2 Operations APIs
+## Local Setup
 
-- /api/operations/master/suppliers
-- /api/operations/master/warehouses
-- /api/operations/master/products
-- /api/operations/master/locations
-- /api/operations/ledger
-- /api/operations/receipts
-- /api/operations/deliveries
-- /api/operations/adjustments
+### 1. Prerequisites
 
-## 5. Tech Stack
+- Node.js 18+
+- PostgreSQL 14+
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Framer Motion
-- React Router
-- Axios
-- Express
-- SQLite3
-- PostgreSQL client (pg)
-
-## 6. Project Structure
-
-```text
-backend/
-	server.cjs
-	database.cjs
-	routes/
-
-src/
-	auth/
-	components/
-	layout/
-	modules/
-		dashboard/
-		operations/
-	pages/
-```
-
-## 7. Getting Started
-
-### 7.1 Install
+### 2. Backend Setup
 
 ```bash
+cd backend
 npm install
+copy .env.example .env
 ```
 
-### 7.2 Run Development
+Update backend .env values:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/coreinventory
+JWT_SECRET=your_strong_secret
+PORT=5000
+CORS_ORIGIN=http://localhost:5173
+```
+
+Run migrations and seed:
+
+```bash
+npm run migrate
+npm run seed
+```
+
+Start backend:
 
 ```bash
 npm run dev
 ```
 
-This starts:
-
-- Frontend (Vite): http://localhost:5173
-- API (Express): http://localhost:4000
-
-### 7.3 Production Build
+### 3. Frontend Setup
 
 ```bash
-npm run build
+cd ../frontend
+npm install
 ```
 
-### 7.4 Preview Build
-
-```bash
-npm run preview
-```
-
-## 8. Scripts
-
-- npm run dev: run API + frontend concurrently
-- npm run dev:web: run frontend only
-- npm run dev:api: run API only
-- npm run build: typecheck + production build
-- npm run lint: lint project
-- npm run preview: preview production build
-
-## 9. Environment Variables
-
-Optional EmailJS configuration for OTP mail delivery:
+Create frontend .env:
 
 ```bash
 VITE_EMAILJS_SERVICE_ID=your_service_id
@@ -204,26 +130,81 @@ VITE_EMAILJS_TEMPLATE_ID=your_template_id
 VITE_EMAILJS_PUBLIC_KEY=your_public_key
 ```
 
-If these are not set, forgot-password uses demo OTP fallback mode.
+Start frontend:
 
-## 10. Validation and Quality Rules
+```bash
+npm run dev
+```
 
-Implemented validation behavior includes:
+## Run URLs
 
-- Stock values cannot be negative
-- Reserved quantity cannot exceed on hand
-- Delivery line quantity cannot exceed available stock
-- Duplicate products are blocked within the same operation document
-- Required fields enforced for receipts/deliveries/adjustments/settings
-- Warehouse-location short code consistency is enforced
+- Frontend: http://localhost:5173
+- Backend health: http://localhost:5000/api/health
 
-## 11. Hackathon Notes
+## Build Commands
 
-- UI optimized for high-clarity demo flow
-- Navigation designed for rapid module switching during judging
-- Fallback data strategy prevents demo failure when backend availability is partial
-- Operations workflows mirror practical inventory lifecycle stages
+Backend:
 
-## 12. License
+```bash
+cd backend
+npm start
+```
 
-This project is prepared for hackathon demonstration and team collaboration.
+Frontend production build:
+
+```bash
+cd frontend
+npm run build
+```
+
+Frontend preview:
+
+```bash
+npm run preview
+```
+
+## OTP Email Notes (EmailJS)
+
+Forgot password flow works as:
+
+1. backend generates OTP and stores expiry
+2. frontend sends OTP email via EmailJS
+3. user verifies OTP
+4. password reset is allowed only after OTP verification
+
+Required EmailJS template params:
+
+- to_email
+- otp_code
+- app_name
+
+If EmailJS env keys are missing, app falls back to demo mode.
+
+## Judge Demo Flow
+
+Recommended path:
+
+1. Login
+2. Dashboard KPIs and filters
+3. Receipts -> validate -> stock increases
+4. Deliveries -> validate -> stock decreases
+5. Transfers/adjustments and ledger visibility
+6. Forgot password OTP flow
+
+## Troubleshooting
+
+- npm run dev fails from workspace root:
+Run commands inside backend or frontend directories.
+
+- Frontend opens on a different port:
+If 5173 is occupied, Vite automatically moves to 5174/5175.
+
+- CORS issues:
+Ensure backend CORS_ORIGIN matches frontend URL.
+
+- OTP mail not received:
+Check frontend .env keys and EmailJS template variable names.
+
+## License
+
+Prepared for hackathon demonstration and team collaboration.

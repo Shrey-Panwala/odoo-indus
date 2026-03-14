@@ -43,11 +43,11 @@ export default function RecentActivity(){
 
           let text = ''
           if (type === 'receipt') {
-            text = `+${qty} ${entry.product_name || ''} received (${entry.txn_ref || ''})`
+            text = `+${qty} ${entry.product_name || ''} added to stock (${entry.txn_ref || ''})`
           } else if (type === 'delivery') {
-            text = `-${qty} ${entry.product_name || ''} delivered (${entry.txn_ref || ''})`
+            text = `-${qty} ${entry.product_name || ''} removed from stock (${entry.txn_ref || ''})`
           } else {
-            text = `${entry.txn_type}: ${qty} ${entry.product_name || ''} (${entry.txn_ref || ''})`
+            text = `${entry.txn_type}: ${qty} ${entry.product_name || ''} moved (${entry.txn_ref || ''})`
           }
 
           return { type, text, ts: entry.created_at }
@@ -68,8 +68,8 @@ export default function RecentActivity(){
       className="surface-panel rounded-2xl p-4"
     >
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-white font-semibold">Recent Inventory Activity</h4>
-        <button type="button" className="btn-muted px-3 py-1 text-xs">Live feed</button>
+        <h4 className="text-white font-semibold">Recent Inventory Updates</h4>
+        <button type="button" className="btn-muted px-3 py-1 text-xs">Live updates</button>
       </div>
       <div className="space-y-2 max-h-[470px] overflow-y-auto fancy-scroll pr-1">
         {items.length===0 && <div className="text-gray-400">No recent activity</div>}

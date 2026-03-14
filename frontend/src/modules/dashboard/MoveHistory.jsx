@@ -24,7 +24,7 @@ export default function MoveHistory() {
 
   const groupedByStatus = useMemo(() => {
     return rows.reduce((acc, row) => {
-      const key = row.status || 'Draft'
+      const key = row.status || 'Not Started'
       if (!acc[key]) acc[key] = []
       acc[key].push(row)
       return acc
@@ -55,7 +55,7 @@ export default function MoveHistory() {
           >
             <Plus size={13} /> NEW
           </button>
-          <h2 className="text-2xl font-semibold text-amber-50">Move History</h2>
+          <h2 className="text-2xl font-semibold text-amber-50">Stock Movement History</h2>
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <div className="relative w-64 max-w-full">
@@ -67,7 +67,7 @@ export default function MoveHistory() {
                   setSearch(value)
                   await load(value)
                 }}
-                placeholder="Search reference or contacts"
+                placeholder="Search by reference or contact"
                 className="w-full rounded-lg border border-white/15 bg-gray-950/60 py-2 pl-9 pr-3 text-sm text-gray-100"
               />
             </div>
@@ -125,7 +125,7 @@ export default function MoveHistory() {
               </tbody>
             </table>
 
-            {!rows.length && <p className="py-6 text-center text-sm text-gray-400">No move history found.</p>}
+            {!rows.length && <p className="py-6 text-center text-sm text-gray-400">No stock movement records found.</p>}
           </div>
         ) : (
           <div className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-3">

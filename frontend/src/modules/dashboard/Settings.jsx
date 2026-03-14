@@ -140,19 +140,19 @@ export default function Settings() {
     <motion.section initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="surface-panel rounded-2xl p-6">
         <h2 className="section-title text-2xl">Settings</h2>
-        <p className="section-subtitle mt-1">Manage warehouses and locations with strict mapping validation.</p>
+        <p className="section-subtitle mt-1">Manage storage sites and storage areas with clear mapping checks.</p>
       </div>
 
       {section !== 'warehouse' && section !== 'location' && (
         <div className="grid gap-4 md:grid-cols-2">
           <SectionCard
-            title="Warehouse"
-            description="Manage warehouse name, short code and address."
+            title="Storage Site"
+            description="Manage storage site name, code, and address."
             onOpen={() => openSection('warehouse')}
           />
           <SectionCard
-            title="Location"
-            description="Manage location name, short code and linked warehouse."
+            title="Storage Area"
+            description="Manage storage area name, code, and linked storage site."
             onOpen={() => openSection('location')}
           />
         </div>
@@ -161,7 +161,7 @@ export default function Settings() {
       {section === 'warehouse' && (
         <div className="surface-panel rounded-2xl p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-white">Warehouse</h3>
+            <h3 className="text-xl font-semibold text-white">Storage Site</h3>
             <button type="button" onClick={resetSection} className="btn-muted px-3 py-1 text-xs">
               Back
             </button>
@@ -178,7 +178,7 @@ export default function Settings() {
             </div>
 
             <div className="grid gap-1">
-              <label className="text-sm text-gray-300">Short Code</label>
+              <label className="text-sm text-gray-300">Site Code</label>
               <input
                 value={warehouseForm.short_code}
                 onChange={(event) => setWarehouseForm((prev) => ({ ...prev, short_code: event.target.value.toUpperCase() }))}
@@ -198,7 +198,7 @@ export default function Settings() {
             {warehouseFormError && <p className="text-xs text-amber-200">{warehouseFormError}</p>}
 
             <button type="submit" disabled={Boolean(warehouseFormError)} className="btn-accent mt-2 w-fit disabled:opacity-60">
-              {warehouseForm.id ? 'Update Warehouse' : 'Save Warehouse'}
+              {warehouseForm.id ? 'Update Storage Site' : 'Save Storage Site'}
             </button>
           </form>
 
@@ -207,7 +207,7 @@ export default function Settings() {
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-gray-400">
                   <th className="px-2 py-2">Name</th>
-                  <th className="px-2 py-2">Short Code</th>
+                  <th className="px-2 py-2">Site Code</th>
                   <th className="px-2 py-2">Address</th>
                   <th className="px-2 py-2">Action</th>
                 </tr>
@@ -245,7 +245,7 @@ export default function Settings() {
       {section === 'location' && (
         <div className="surface-panel rounded-2xl p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-white">Location</h3>
+            <h3 className="text-xl font-semibold text-white">Storage Area</h3>
             <button type="button" onClick={resetSection} className="btn-muted px-3 py-1 text-xs">
               Back
             </button>
@@ -262,7 +262,7 @@ export default function Settings() {
             </div>
 
             <div className="grid gap-1">
-              <label className="text-sm text-gray-300">Short Code</label>
+              <label className="text-sm text-gray-300">Area Code</label>
               <input
                 value={locationForm.short_code}
                 onChange={(event) => setLocationForm((prev) => ({ ...prev, short_code: event.target.value.toUpperCase() }))}
@@ -271,13 +271,13 @@ export default function Settings() {
             </div>
 
             <div className="grid gap-1">
-              <label className="text-sm text-gray-300">Warehouse</label>
+              <label className="text-sm text-gray-300">Storage Site</label>
               <select
                 value={locationForm.warehouse_id}
                 onChange={(event) => setLocationForm((prev) => ({ ...prev, warehouse_id: event.target.value }))}
                 className="form-field"
               >
-                <option value="">Select warehouse</option>
+                <option value="">Select storage site</option>
                 {warehouses.map((warehouse) => (
                   <option key={warehouse.id} value={warehouse.id}>
                     {warehouse.name} ({warehouse.short_code})
@@ -287,7 +287,7 @@ export default function Settings() {
             </div>
 
             <div className="grid gap-1">
-              <label className="text-sm text-gray-300">Warehouse Short Code (must match)</label>
+              <label className="text-sm text-gray-300">Storage Site Code (must match)</label>
               <input
                 value={locationForm.warehouse_short_code}
                 readOnly
@@ -298,7 +298,7 @@ export default function Settings() {
             {locationFormError && <p className="text-xs text-amber-200">{locationFormError}</p>}
 
             <button type="submit" disabled={Boolean(locationFormError)} className="btn-accent mt-2 w-fit disabled:opacity-60">
-              {locationForm.id ? 'Update Location' : 'Save Location'}
+              {locationForm.id ? 'Update Storage Area' : 'Save Storage Area'}
             </button>
           </form>
 
@@ -307,9 +307,9 @@ export default function Settings() {
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-gray-400">
                   <th className="px-2 py-2">Name</th>
-                  <th className="px-2 py-2">Short Code</th>
-                  <th className="px-2 py-2">Warehouse</th>
-                  <th className="px-2 py-2">Warehouse Code</th>
+                  <th className="px-2 py-2">Area Code</th>
+                  <th className="px-2 py-2">Storage Site</th>
+                  <th className="px-2 py-2">Site Code</th>
                   <th className="px-2 py-2">Action</th>
                 </tr>
               </thead>

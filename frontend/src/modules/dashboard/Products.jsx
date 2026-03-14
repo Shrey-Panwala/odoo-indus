@@ -11,10 +11,10 @@ function validateRow(draft) {
   const unitCost = toNumber(draft.unitCost)
   const reservedQty = toNumber(draft.reservedQty)
 
-  if (onHand < 0) return 'On hand cannot be negative.'
+  if (onHand < 0) return 'Current stock cannot be negative.'
   if (unitCost < 0) return 'Unit cost cannot be negative.'
-  if (reservedQty < 0) return 'Reserved quantity cannot be negative.'
-  if (reservedQty > onHand) return 'Reserved quantity cannot exceed on hand quantity.'
+  if (reservedQty < 0) return 'Reserved stock cannot be negative.'
+  if (reservedQty > onHand) return 'Reserved stock cannot be higher than current stock.'
   return ''
 }
 
@@ -43,7 +43,7 @@ export default function Products(){
       setDrafts(nextDrafts)
     } catch (loadError) {
       console.error(loadError)
-      setError('Unable to load stock items.')
+      setError('Unable to load inventory items.')
     }
   }
 
@@ -90,7 +90,7 @@ export default function Products(){
       setDraftValue(id, 'reservedQty', Number(updated.reserved_qty || 0))
       setRowErrors((prev) => ({ ...prev, [id]: '' }))
     } catch (saveError) {
-      const message = saveError?.message || 'Unable to save stock changes.'
+      const message = saveError?.message || 'Unable to save inventory changes.'
       setError(message)
     } finally {
       setSavingId(null)
@@ -107,7 +107,7 @@ export default function Products(){
     const currentOnHand = toNumber(draft.onHand)
     const newOnHand = currentOnHand + delta
     if (newOnHand < 0) {
-      setRowErrors((prev) => ({ ...prev, [id]: 'Stock adjustment would result in negative on hand quantity.' }))
+      setRowErrors((prev) => ({ ...prev, [id]: 'This stock change would make current stock negative.' }))
       return
     }
 
@@ -124,7 +124,7 @@ export default function Products(){
       setDraftValue(id, 'delta', 0)
       setRowErrors((prev) => ({ ...prev, [id]: '' }))
     } catch (adjustError) {
-      const message = adjustError?.response?.data?.error || adjustError?.message || 'Unable to adjust stock.'
+      const message = adjustError?.response?.data?.error || adjustError?.message || 'Unable to adjust inventory.'
       setError(message)
     } finally {
       setSavingId(null)
@@ -144,32 +144,32 @@ export default function Products(){
     <div className="surface-panel space-y-4 rounded-2xl p-5 md:p-6">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="surface-subtle rounded-xl px-3 py-2">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Visible SKUs</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">Visible Products</p>
           <p className="text-2xl font-semibold text-white">{filteredItems.length}</p>
         </div>
         <div className="surface-subtle rounded-xl px-3 py-2">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Total On Hand</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">Total Current Stock</p>
           <p className="text-2xl font-semibold text-cyan-100">{totalOnHand}</p>
         </div>
         <div className="surface-subtle rounded-xl px-3 py-2">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Low Stock</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">Low Inventory</p>
           <p className="text-2xl font-semibold text-amber-200">{lowStockCount}</p>
         </div>
         <div className="surface-subtle rounded-xl px-3 py-2">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Mode</p>
-          <p className="text-sm font-semibold text-emerald-200">Frontend-ready</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">Data Source</p>
+          <p className="text-sm font-semibold text-emerald-200">App data ready</p>
         </div>
       </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="section-title text-2xl">Stock</h2>
-          <p className="section-subtitle">Clean stock controls with row-level validation and safer quantity updates.</p>
+          <h2 className="section-title text-2xl">Inventory</h2>
+          <p className="section-subtitle">Simple inventory controls with row checks and safe quantity updates.</p>
         </div>
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search product, sku, category or location"
+          placeholder="Search product, code, category, or storage area"
           className="form-field w-full md:max-w-xs"
         />
       </div>
@@ -182,10 +182,10 @@ export default function Products(){
             <tr className="bg-slate-900/35 text-left text-base text-gray-300">
               <th className="px-3 py-3">Product</th>
               <th className="px-3 py-3">Unit cost</th>
-              <th className="px-3 py-3">On hand</th>
-              <th className="px-3 py-3">Reserved</th>
-              <th className="px-3 py-3">Free to use</th>
-              <th className="px-3 py-3">Location</th>
+              <th className="px-3 py-3">Current stock</th>
+              <th className="px-3 py-3">Reserved stock</th>
+              <th className="px-3 py-3">Available stock</th>
+              <th className="px-3 py-3">Storage area</th>
               <th className="px-3 py-3">Adjust (+/-)</th>
               <th className="px-3 py-3">Action</th>
             </tr>
@@ -228,7 +228,7 @@ export default function Products(){
                       value={draft.reservedQty ?? 0}
                       onChange={(event) => setDraftValue(product.id, 'reservedQty', event.target.value)}
                       className="form-field h-11 min-w-[85px] px-3"
-                      title="Reserved quantity"
+                      title="Reserved stock"
                     />
                   </td>
                   <td className="px-3 py-3 text-gray-200">
@@ -284,7 +284,7 @@ export default function Products(){
             {filteredItems.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-3 py-6 text-center text-sm text-gray-400">
-                  No stock items match your search.
+                  No inventory items match your search.
                 </td>
               </tr>
             )}
@@ -293,7 +293,7 @@ export default function Products(){
       </div>
 
       <p className="mt-4 text-xs text-gray-400">
-        Tip: adjust quantity using +/- field for quick changes, then use Save for direct on-hand, reserved, and unit-cost updates.
+        Tip: use +/- for quick stock updates, then Save to apply current stock, reserved stock, and unit cost changes.
       </p>
     </div>
   )

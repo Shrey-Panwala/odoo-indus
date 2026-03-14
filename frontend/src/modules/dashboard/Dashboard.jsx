@@ -31,10 +31,10 @@ export default function Dashboard(){
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"
       >
         <KPICard title="Total Products" value={stats.totalProducts ?? 0} icon={<Box />} />
-        <KPICard title="Low Stock Items" value={stats.lowStockItems ?? 0} icon={<AlertTriangle />} />
-        <KPICard title="Pending Receipts" value={stats.pendingReceipts ?? 0} icon={<ArrowDown />} />
-        <KPICard title="Pending Deliveries" value={stats.pendingDeliveries ?? 0} icon={<ArrowUp />} />
-        <KPICard title="Scheduled Transfers" value={stats.scheduledTransfers ?? 0} icon={<Repeat />} />
+        <KPICard title="Low Inventory Products" value={stats.lowStockItems ?? 0} icon={<AlertTriangle />} />
+        <KPICard title="Incoming Orders Waiting" value={stats.pendingReceipts ?? 0} icon={<ArrowDown />} />
+        <KPICard title="Outgoing Orders Waiting" value={stats.pendingDeliveries ?? 0} icon={<ArrowUp />} />
+        <KPICard title="Planned Stock Moves" value={stats.scheduledTransfers ?? 0} icon={<Repeat />} />
       </motion.section>
 
       <motion.section
@@ -44,7 +44,7 @@ export default function Dashboard(){
           transition={{ duration: 0.55, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
           className="surface-panel ambient-grid rounded-2xl p-5"
       >
-          <h3 className="section-title mb-4 text-lg">Stock Overview</h3>
+          <h3 className="section-title mb-4 text-lg">Inventory Overview</h3>
           <StockChart />
       </motion.section>
 
@@ -56,7 +56,7 @@ export default function Dashboard(){
         className="grid grid-cols-1 xl:grid-cols-3 gap-6"
       >
         <div className="surface-panel rounded-2xl p-5">
-          <h3 className="section-title mb-4 text-lg">Operations</h3>
+          <h3 className="section-title mb-4 text-lg">Order Processing</h3>
           <OperationCards />
         </div>
         <div className="xl:col-span-2">

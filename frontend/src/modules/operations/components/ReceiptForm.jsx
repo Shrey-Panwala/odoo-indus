@@ -37,7 +37,7 @@ export default function ReceiptForm({ suppliers, warehouses, products, onSubmit,
       }))
 
     if (!supplierId || !warehouseId || !normalizedLines.length) {
-      setError('Supplier, warehouse and at least one product line are required.')
+      setError('Supplier, storage site, and at least one product line are required.')
       return
     }
 
@@ -54,7 +54,7 @@ export default function ReceiptForm({ suppliers, warehouses, products, onSubmit,
         lines: normalizedLines,
       })
     } catch (submitError) {
-      setError(submitError?.message || 'Unable to create receipt')
+      setError(submitError?.message || 'Unable to create incoming order')
     } finally {
       setSaving(false)
     }
@@ -67,7 +67,7 @@ export default function ReceiptForm({ suppliers, warehouses, products, onSubmit,
       onSubmit={submit}
       className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4"
     >
-      <h3 className="text-lg font-semibold text-white">Create Receipt</h3>
+      <h3 className="text-lg font-semibold text-white">Create Incoming Order</h3>
 
       <div className="grid gap-3 md:grid-cols-2">
         <select
@@ -86,7 +86,7 @@ export default function ReceiptForm({ suppliers, warehouses, products, onSubmit,
           onChange={(event) => setWarehouseId(event.target.value)}
           className="rounded-lg border border-white/10 bg-gray-950/70 px-3 py-2 text-sm text-gray-100"
         >
-          <option value="">Select warehouse</option>
+          <option value="">Select storage site</option>
           {warehouses.map((warehouse) => (
             <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
           ))}
@@ -108,7 +108,7 @@ export default function ReceiptForm({ suppliers, warehouses, products, onSubmit,
               value={line.expected_qty}
               onChange={(event) => setLine(index, 'expected_qty', event.target.value)}
               className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-100"
-              placeholder="Expected qty"
+              placeholder="Planned quantity"
             />
             <input
               type="number"
@@ -116,7 +116,7 @@ export default function ReceiptForm({ suppliers, warehouses, products, onSubmit,
               value={line.received_qty}
               onChange={(event) => setLine(index, 'received_qty', event.target.value)}
               className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-100"
-              placeholder="Received qty"
+              placeholder="Received quantity"
             />
             <button
               type="button"
@@ -135,7 +135,7 @@ export default function ReceiptForm({ suppliers, warehouses, products, onSubmit,
           Add Row
         </button>
         <button type="submit" disabled={!canSubmit || saving} className="rounded-lg border border-purple-400/50 px-4 py-2 text-sm text-purple-200 disabled:opacity-40">
-          {saving ? 'Creating...' : 'Create Receipt'}
+          {saving ? 'Creating...' : 'Create Incoming Order'}
         </button>
         <button type="button" onClick={onCancel} className="rounded-lg border border-white/20 px-4 py-2 text-sm text-gray-200">
           Cancel

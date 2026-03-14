@@ -40,7 +40,7 @@ export default function DeliveryForm({ warehouses, products, stockResolver, onSu
       .map((line) => ({ product_id: Number(line.product_id), quantity: Number(line.quantity) }))
 
     if (!customerName.trim() || !warehouseId || !normalizedLines.length) {
-      setError('Customer name, warehouse and line items are required.')
+      setError('Customer name, storage site, and line items are required.')
       return
     }
 
@@ -57,7 +57,7 @@ export default function DeliveryForm({ warehouses, products, stockResolver, onSu
         lines: normalizedLines,
       })
     } catch (submitError) {
-      setError(submitError?.message || 'Unable to create delivery order')
+      setError(submitError?.message || 'Unable to create outgoing order')
     } finally {
       setSaving(false)
     }
@@ -70,7 +70,7 @@ export default function DeliveryForm({ warehouses, products, stockResolver, onSu
       onSubmit={submit}
       className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4"
     >
-      <h3 className="text-lg font-semibold text-white">Create Delivery Order</h3>
+      <h3 className="text-lg font-semibold text-white">Create Outgoing Order</h3>
 
       <div className="grid gap-3 md:grid-cols-2">
         <input
@@ -85,7 +85,7 @@ export default function DeliveryForm({ warehouses, products, stockResolver, onSu
           onChange={(event) => setWarehouseId(event.target.value)}
           className="rounded-lg border border-white/10 bg-gray-950/70 px-3 py-2 text-sm text-gray-100"
         >
-          <option value="">Select warehouse</option>
+          <option value="">Select storage site</option>
           {warehouses.map((warehouse) => (
             <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
           ))}
@@ -109,7 +109,7 @@ export default function DeliveryForm({ warehouses, products, stockResolver, onSu
               placeholder="Quantity"
             />
             <div className="rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100">
-              Available: {line.product_id ? stockMap[line.product_id] ?? '-' : '-'}
+              In stock: {line.product_id ? stockMap[line.product_id] ?? '-' : '-'}
             </div>
             <button
               type="button"
@@ -128,7 +128,7 @@ export default function DeliveryForm({ warehouses, products, stockResolver, onSu
           Add Row
         </button>
         <button type="submit" disabled={!canSubmit || saving} className="rounded-lg border border-purple-400/50 px-4 py-2 text-sm text-purple-200 disabled:opacity-40">
-          {saving ? 'Creating...' : 'Create Delivery'}
+          {saving ? 'Creating...' : 'Create Outgoing Order'}
         </button>
         <button type="button" onClick={onCancel} className="rounded-lg border border-white/20 px-4 py-2 text-sm text-gray-200">
           Cancel

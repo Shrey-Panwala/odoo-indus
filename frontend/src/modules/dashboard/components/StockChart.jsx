@@ -229,25 +229,25 @@ export default function StockChart(){
 
     if (topCategory && totalStock > 0) {
       const share = ((Number(topCategory.stock || 0) * 100) / totalStock).toFixed(1)
-      items.push({ tone: Number(share) > 40 ? 'watch' : 'info', text: `${topCategory.category} holds ${share}% of total stock. Keep concentration risk under control.` })
+      items.push({ tone: Number(share) > 40 ? 'watch' : 'info', text: `${topCategory.category} holds ${share}% of total inventory. Keep stock spread balanced.` })
     }
 
     if (lowWarehouse) {
-      items.push({ tone: lowWarehouse.stock < 500 ? 'critical' : 'watch', text: `${lowWarehouse.warehouse} is currently the thinnest warehouse at ${lowWarehouse.stock} units.` })
+      items.push({ tone: lowWarehouse.stock < 500 ? 'critical' : 'watch', text: `${lowWarehouse.warehouse} currently has the lowest stock at ${lowWarehouse.stock} units.` })
     }
 
     items.push({
       tone: net7 >= 0 ? 'good' : 'critical',
-      text: `7-day net flow is ${net7 >= 0 ? '+' : ''}${net7} units (incoming ${weeklyIncoming}, outgoing ${weeklyOutgoing}).`,
+      text: `7-day net stock change is ${net7 >= 0 ? '+' : ''}${net7} units (added ${weeklyIncoming}, removed ${weeklyOutgoing}).`,
     })
 
     items.push({
       tone: doneRate >= 75 ? 'good' : doneRate >= 50 ? 'watch' : 'critical',
-      text: `Operations completion rate is ${doneRate.toFixed(1)}% done states across all documents.`,
+      text: `Task completion rate is ${doneRate.toFixed(1)}% completed across all records.`,
     })
 
     if (topTxn) {
-      items.push({ tone: 'info', text: `${prettifyTxnType(topTxn.type)} is the dominant movement type by volume (${topTxn.volume} units).` })
+      items.push({ tone: 'info', text: `${prettifyTxnType(topTxn.type)} is the most common stock movement (${topTxn.volume} units).` })
     }
 
     const topLocations = [...(analytics.locationHeatmap || [])]
@@ -258,7 +258,7 @@ export default function StockChart(){
     const top3Share = locationTotal > 0 ? (topLocations.reduce((a, b) => a + b, 0) * 100) / locationTotal : 0
     items.push({
       tone: top3Share > 55 ? 'watch' : 'good',
-      text: `Top 3 locations hold ${top3Share.toFixed(1)}% of visible stock. ${top3Share > 55 ? 'Consider better balancing.' : 'Distribution is relatively balanced.'}`,
+      text: `Top 3 storage areas hold ${top3Share.toFixed(1)}% of visible stock. ${top3Share > 55 ? 'Consider spreading stock more evenly.' : 'Stock distribution looks balanced.'}`,
     })
 
     return items.slice(0, 6)
@@ -281,19 +281,19 @@ export default function StockChart(){
         className="surface-subtle rounded-2xl p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2"
       >
         <label className="text-xs text-slate-300 flex flex-col gap-1">
-          Document Type
+          Record Type
           <select value={docType} onChange={(e) => setDocType(e.target.value)} className="form-field py-1.5 text-sm">
-            <option value="all">All Operations</option>
-            <option value="receipts">Receipts</option>
-            <option value="deliveries">Deliveries</option>
-            <option value="transfers">Transfers</option>
-            <option value="adjustments">Adjustments</option>
+            <option value="all">All Tasks</option>
+            <option value="receipts">Incoming Orders</option>
+            <option value="deliveries">Outgoing Orders</option>
+            <option value="transfers">Stock Moves</option>
+            <option value="adjustments">Stock Corrections</option>
           </select>
         </label>
         <label className="text-xs text-slate-300 flex flex-col gap-1">
-          Warehouse
+          Storage Site
           <select value={selectedWarehouse} onChange={(e) => setSelectedWarehouse(e.target.value)} className="form-field py-1.5 text-sm">
-            <option value="all">All Warehouses</option>
+            <option value="all">All Storage Sites</option>
             {warehouses.map((warehouse) => (
               <option key={warehouse} value={warehouse}>{warehouse}</option>
             ))}
@@ -309,7 +309,7 @@ export default function StockChart(){
           </select>
         </label>
         <label className="text-xs text-slate-300 flex flex-col gap-1">
-          Movement Type
+          Stock Change Type
           <select value={selectedTxnType} onChange={(e) => setSelectedTxnType(e.target.value)} className="form-field py-1.5 text-sm">
             <option value="all">All Types</option>
             {(analytics.filterOptions?.movementTypes || []).map((type) => (
@@ -327,7 +327,7 @@ export default function StockChart(){
       </motion.div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-      <ChartCard title="Top Products by Stock" subtitle="products.total_stock aggregated from stock_levels">
+      <ChartCard title="Top Products by Quantity" subtitle="Total quantity by product">
         <div style={{height:240}}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={filteredTopProducts}>
@@ -341,7 +341,7 @@ export default function StockChart(){
         </div>
       </ChartCard>
 
-      <ChartCard title="Stock Share by Category" subtitle="products.category_id + stock_levels.quantity">
+      <ChartCard title="Inventory Share by Category" subtitle="Category-wise stock split">
         <div style={{height:240}}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -362,7 +362,7 @@ export default function StockChart(){
         </div>
       </ChartCard>
 
-      <ChartCard title="Daily Inventory Flow (14 Days)" subtitle="stock_ledger.qty_change by day" className="xl:col-span-2">
+      <ChartCard title="Daily Stock Changes" subtitle="Stock added and removed by day" className="xl:col-span-2">
         <div style={{height:260}}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={flowData}>
@@ -381,15 +381,15 @@ export default function StockChart(){
               <YAxis tick={{ fill: '#d1d5db', fontSize: 12 }} stroke="#94a3b8" />
               <Tooltip {...chartTooltip()} />
               <Legend wrapperStyle={{ color: '#cbd5e1', fontSize: 12 }} />
-              <Area type="monotone" dataKey="incoming" name="Incoming" stroke="#34d399" fill="url(#incomingGrad)" strokeWidth={2} />
-              <Area type="monotone" dataKey="outgoing" name="Outgoing" stroke="#fb7185" fill="url(#outgoingGrad)" strokeWidth={2} />
+              <Area type="monotone" dataKey="incoming" name="Added" stroke="#34d399" fill="url(#incomingGrad)" strokeWidth={2} />
+              <Area type="monotone" dataKey="outgoing" name="Removed" stroke="#fb7185" fill="url(#outgoingGrad)" strokeWidth={2} />
               <Line type="monotone" dataKey="net" name="Net" stroke="#47bedf" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </ChartCard>
 
-      <ChartCard title="Operation Status Distribution" subtitle="receipts, deliveries, transfers, adjustments by status">
+      <ChartCard title="Task Status Overview" subtitle="Incoming, outgoing, moves, and corrections by status">
         <div style={{height:240}}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={statusData}>
@@ -407,7 +407,7 @@ export default function StockChart(){
         </div>
       </ChartCard>
 
-      <ChartCard title="Stock by Warehouse" subtitle="warehouses -> locations -> stock_levels">
+      <ChartCard title="Stock by Storage Site" subtitle="Stock grouped by storage site">
         <div style={{height:240}}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={warehouseData}>
@@ -421,7 +421,7 @@ export default function StockChart(){
         </div>
       </ChartCard>
 
-      <ChartCard title="Movement Mix" subtitle="stock_ledger.txn_type by moved volume">
+      <ChartCard title="Stock Change Breakdown" subtitle="Change type grouped by moved quantity">
         <div style={{height:240}}>
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={movementMixData} outerRadius={84}>
@@ -434,7 +434,7 @@ export default function StockChart(){
         </div>
       </ChartCard>
 
-      <ChartCard title="Top Locations by Stock" subtitle="location-level stock heat ranking" className="xl:col-span-2">
+      <ChartCard title="Top Storage Areas by Stock" subtitle="Areas with the highest stock" className="xl:col-span-2">
         <div style={{height:260}}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={locationData} layout="vertical" margin={{ left: 80 }}>
@@ -452,7 +452,7 @@ export default function StockChart(){
         </div>
       </ChartCard>
 
-      <ChartCard title="AI-Generated Inventory Insights" subtitle="Important observations from live dashboard data" className="xl:col-span-2">
+      <ChartCard title="Smart Inventory Insights" subtitle="Important points from live dashboard data" className="xl:col-span-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {insights.map((item, idx) => (
             <div key={`${item.text}-${idx}`} className="surface-subtle rounded-xl p-3 border border-white/10">
