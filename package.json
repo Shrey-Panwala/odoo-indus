@@ -17,6 +17,7 @@
     "express": "^4.21.2",
     "framer-motion": "^11.3.19",
     "lucide-react": "^0.427.0",
+    "pg": "^8.20.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.1",

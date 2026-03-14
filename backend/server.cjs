@@ -6,6 +6,7 @@ const productsRouter = require('./routes/products.cjs')
 const receiptsRouter = require('./routes/receipts.cjs')
 const deliveriesRouter = require('./routes/deliveries.cjs')
 const adjustmentsRouter = require('./routes/adjustments.cjs')
+const operationsRouter = require('./routes/operations.cjs')
 
 const app = express()
 
@@ -18,6 +19,7 @@ app.use('/api/products', productsRouter)
 app.use('/api/receipts', receiptsRouter)
 app.use('/api/deliveries', deliveriesRouter)
 app.use('/api/adjustments', adjustmentsRouter)
+app.use('/api/operations', operationsRouter)
 
 app.get('/api/dashboard/stats', (_req, res) => {
   const stats = {}

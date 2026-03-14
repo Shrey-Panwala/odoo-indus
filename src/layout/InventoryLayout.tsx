@@ -7,7 +7,7 @@ import { useAuth } from '../auth/AuthContext'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: Box },
-  { to: '/products', label: 'Products', icon: Package },
+  { to: '/products', label: 'Stock', icon: Package },
   { to: '/operations', label: 'Operations', icon: Activity },
   { to: '/move-history', label: 'Move History', icon: History },
   { to: '/settings', label: 'Settings', icon: Settings },
